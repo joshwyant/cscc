@@ -4,9 +4,9 @@ namespace cscc.Parsing.Ast
 {
     public class IntegerConstantAstNode : ConstantExpressionAstNode
     {
-        public long Value { get; }
-        public IntegerConstantAstNode(long value, int line, int column)
-            : base(line, column)
+        public IntegerToken Value { get; }
+        public IntegerConstantAstNode(IntegerToken value)
+            : base(value.Line, value.Column)
         {
             Value = value;
         }

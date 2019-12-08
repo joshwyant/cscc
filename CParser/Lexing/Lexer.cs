@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using static cscc.Lexing.Terminal;
 using static cscc.Lexing.LexerState;
+using static cscc.Translation.SymbolType;
 
 namespace cscc.Lexing
 {
@@ -96,13 +97,144 @@ namespace cscc.Lexing
                 c = await InputStream.Read();
                 if (char.IsLetter(c) || c == '_')
                 {
-                    // TODO: Identifiers and built-ins
-                    // Include: Identifier, TypedefName, and EnumConstant
+                    var sb = new StringBuilder(c.ToString());
+                    Symbol symbol;
+                    while ((c = await InputStream.Peek()) == '_' || char.IsLetter(c) || char.IsDigit(c))
+                    {
+                        sb.Append(c);
+                    }
+                    var ident = sb.ToString();
+                    if (ReservedWords.ContainsKey(ident))
+                    {
+                        yield return new Token(ReservedWords[ident], line, column, filename);
+                    }
+                    else if (TranslationUnit.Symbols.ContainsKey(ident)
+                        && ((symbol = TranslationUnit.Symbols[ident]).Type == SymbolType.EnumSymbol
+                            || symbol.Type == TypedefSymbol))
+                    {
+                        yield return symbol.Type == TypedefSymbol 
+                            ? new ValueToken<Symbol>(TypedefName, line, column, filename, symbol) 
+                            : new ValueToken<EnumSymbol>(EnumConstant, line, column, filename, (symbol as EnumSymbol)!);
+                    }
+                    else
+                    {
+                        yield return new ValueToken<string>(Identifier, line, column, filename, ident);
+                    }
                 }
                 else if (char.IsDigit(c))
                 {
-                    // TODO: Numbers, hex, and octal
-                    // IntegerConstant and FloatingConstant
+                    var integer = 0UL;
+                    var fraction = 0M;
+                    var real = 0M;
+                    var hexOrOctal = false;
+                    var floating = false;
+                    var unsigned = false;
+                    var isLong = false;
+                    var nonDouble = false;
+                    if (c == '0')
+                    {
+                        if ((c = await InputStream.Peek()) == 'x' || c == 'X')
+                        {
+                            await InputStream.Read();
+                            while (char.IsDigit(c = char.ToLower(await InputStream.Peek())) || (c >= 'a' && c <= 'f'))
+                            {
+                                c = await InputStream.Read();
+                                integer *= 0x10;
+                                integer += char.IsDigit(c) ? c - '0' : c - 'a' + 0xa;
+                            }
+                            hexOrOctal = true;
+                        }
+                        else if ((c = await InputStream.Peek()) >= '0' && c <= '7') // Octal
+                        {
+                            while ((c = await InputStream.Peek()) >= '0' && c <= '7')
+                            {
+                                c = await InputStream.Read();
+                                integer *= 8;
+                                integer += c - '0';
+                            }
+                            hexOrOctal = true;
+                        }
+                    }
+                    if (!hexOrOctal)
+                    {
+                        while (char.IsDigit(await InputStream.Peek()))
+                        {
+                            c = await InputStream.Read();
+                            integer *= 10;
+                            integer += c - '0';
+                        }
+                        if (await InputStream.Peek() == '.')
+                        {
+                            floating = true;
+                            await InputStream.Read();
+                            while (char.IsDigit(await InputStream.Peek()))
+                            {
+                                c = await InputStream.Read();
+                                fraction += c - '0';
+                                fraction *= 0.1M;
+                            }
+                            real = integer + fraction;
+                        }
+                        if ((c = await InputStream.Peek()) == 'e' || c == 'E')
+                        {
+                            floating = true;
+                            real = integer + fraction;
+                            var multiplier = 10M;
+                            var e = 0;
+                            await InputStream.Read();
+                            if ((c = await InputStream.Peek()) == '+' || '-')
+                            {
+                                await InputStream.Read();
+                                multiplier = c == '-' ? 0.1M : 10M;
+                            }
+                            while (char.IsDigit(await InputStream.Peek()))
+                            {
+                                c = await InputStream.Read();
+                                e *= 10;
+                                e += c - '0';
+                            }
+                            for (var i = 0; i < e; i++)
+                            {
+                                if (Math.Abs(real - System.Double.Epsilon) < 0.1M || Math.Abs(real - System.Double.Epsilon) > 10M)
+                                {
+                                    break;
+                                }
+                                real *= multiplier;
+                            }
+                        }
+                    }
+                    while ((c = await InputStream.Peek()) == 'l' || c == 'L' || c == 'u' || c == 'U' || c == 'f' || c == 'F')
+                    {
+                        switch (c = char.ToLower(await InputStream.Read()))
+                        {
+                            case 'l':
+                                isLong = true;
+                                break;
+                            case 'u':
+                                unsigned = true;
+                                break;
+                            case 'f':
+                                if (!floating)
+                                {
+                                    real = integer;
+                                    floating = true;
+                                }
+                                nonDouble = true;
+                                break;
+                        }
+                    }
+                    if (floating && (isLong || unsigned))
+                    {
+                        Error("Invalid suffix combination");
+                    }
+                    if (floating)
+                    {
+                        yield return new FloatingToken(line, column, filename, real, nonDouble);
+                    }
+                    else
+                    {
+                        yield return new IntegerToken(line, column, filename, integer, unsigned, isLong);
+                    }
                 }
                 else
                 {

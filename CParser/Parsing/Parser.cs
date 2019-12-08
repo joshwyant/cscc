@@ -769,8 +769,8 @@ namespace cscc.Parsing
         protected async Task<TypedefNameAstNode?> typedefName()
         {
             var (line, column) = await Metrics();
-            ValueToken<string>? t;
-            if ((t = await CheckAndGet(TypedefName) as ValueToken<string>)?.Kind == TypedefName)
+            ValueToken<Symbol>? t;
+            if ((t = await CheckAndGet(TypedefName) as ValueToken<Symbol>)?.Kind == TypedefName)
             {
                 return new TypedefNameAstNode(t.Value, line, column);
             }
@@ -1275,7 +1275,7 @@ namespace cscc.Parsing
             var (line, column) = await Metrics();
             if ((t = await CheckAndGet(IntegerConstant)) != default)
             {
-                return new IntegerConstantAstNode((t as ValueToken<long>)!.Value, line, column);
+                return new IntegerConstantAstNode(t! as IntegerToken);
             }
             else if ((t = await CheckAndGet(CharLiteral)) != default)
             {
@@ -1283,11 +1283,11 @@ namespace cscc.Parsing
             }
             else if ((t = await CheckAndGet(FloatingConstant)) != default)
             {
-                return new FloatingConstantAstNode((t as ValueToken<decimal>)!.Value, line, column);
+                return new FloatingConstantAstNode(t! as FloatingToken);
             }
             else if ((t = await CheckAndGet(EnumConstant)) != default)
             {
-                return new EnumerationConstantAstNode((t as ValueToken<long>)!.Value, line, column);
+                return new EnumerationConstantAstNode((t as ValueToken<EnumSymbol>)!.Value, line, column);
             }
             else
             {
