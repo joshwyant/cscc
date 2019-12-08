@@ -2,7 +2,7 @@ using cscc.Lexing;
 
 namespace cscc.Parsing.Ast
 {
-    class AssignmentExpressionAstNode : BinaryExpressionAstNode
+    public class AssignmentExpressionAstNode : BinaryExpressionAstNode
     {
         public AssignmentExpressionAstNode(ExpressionAstNode e1, Terminal terminal, 
             ExpressionAstNode e2, int line, int column)

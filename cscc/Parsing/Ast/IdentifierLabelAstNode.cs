@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    class IdentifierLabelAstNode : LabelAstNode
+    public class IdentifierLabelAstNode : LabelAstNode
     {
         public string Name { get; }
         public IdentifierLabelAstNode(string name, int line, int column)

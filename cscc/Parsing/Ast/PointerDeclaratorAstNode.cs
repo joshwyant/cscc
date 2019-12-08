@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    class PointerDeclaratorAstNode : DeclaratorAstNode
+    public class PointerDeclaratorAstNode : DeclaratorAstNode
     {
         public PointerAstNode Pointer { get; }
         public DeclaratorAstNode? Declarator { get; }

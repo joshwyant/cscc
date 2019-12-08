@@ -2,7 +2,7 @@ using cscc.Lexing;
 
 namespace cscc.Parsing.Ast
 {
-    class ExpressionStatementAstNode : StatementAstNode
+    public class ExpressionStatementAstNode : StatementAstNode
     {
         // Optional for empty statement (semicolon only)
         public ExpressionAstNode? Expression { get; }

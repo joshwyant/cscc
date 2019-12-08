@@ -2,7 +2,7 @@ using cscc.Lexing;
 
 namespace cscc.Parsing.Ast
 {
-    class DeclarationStatementAstNode : StatementAstNode
+    public class DeclarationStatementAstNode : StatementAstNode
     {
         public DeclarationAstNode Declaration { get; }
         public DeclarationStatementAstNode(DeclarationAstNode d)

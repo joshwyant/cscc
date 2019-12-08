@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    class ReturnStatementAstNode : JumpStatementAstNode
+    public class ReturnStatementAstNode : JumpStatementAstNode
     {
         public ExpressionAstNode? Expression { get; }
         public ReturnStatementAstNode(

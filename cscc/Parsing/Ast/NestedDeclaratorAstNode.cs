@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    class NestedDeclaratorAstNode : DeclaratorAstNode
+    public class NestedDeclaratorAstNode : DeclaratorAstNode
     {
         public DeclaratorAstNode Declarator { get; }
         public override string? Name => Declarator.Name;

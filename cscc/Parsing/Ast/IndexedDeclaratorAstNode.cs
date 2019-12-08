@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    class IndexedDeclaratorAstNode : DeclaratorAstNode
+    public class IndexedDeclaratorAstNode : DeclaratorAstNode
     {
         public DeclaratorAstNode? Declarator { get; }
         public ExpressionAstNode Index { get; }

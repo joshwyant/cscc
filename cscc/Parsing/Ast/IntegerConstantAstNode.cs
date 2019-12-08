@@ -2,7 +2,7 @@ using cscc.Lexing;
 
 namespace cscc.Parsing.Ast
 {
-    class IntegerConstantAstNode : ConstantExpressionAstNode
+    public class IntegerConstantAstNode : ConstantExpressionAstNode
     {
         public long Value { get; }
         public IntegerConstantAstNode(long value, int line, int column)

@@ -2,7 +2,7 @@ using cscc.Lexing;
 
 namespace cscc.Parsing.Ast
 {
-    class ConditionalExpressionAstNode : ExpressionAstNode
+    public class ConditionalExpressionAstNode : ExpressionAstNode
     {
         public ExpressionAstNode Condition { get; }
         public ExpressionAstNode TrueExpression { get; }

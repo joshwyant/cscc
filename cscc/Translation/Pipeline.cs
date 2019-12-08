@@ -6,7 +6,7 @@ using cscc.Preprocessing;
 
 namespace cscc.Translation
 {
-    class Pipeline
+    public class Pipeline
     {
         public FileResolver FileResolver { get; }
 

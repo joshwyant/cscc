@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    class WhileStatementAstNode : StatementAstNode
+    public class WhileStatementAstNode : StatementAstNode
     {
         public ExpressionAstNode Expression { get; }
         public StatementAstNode Statement { get; }

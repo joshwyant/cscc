@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace cscc.Parsing.Ast
 {
-    class ParameterDeclarationAstNode : AstNode
+    public class ParameterDeclarationAstNode : AstNode
     {
         public IReadOnlyList<SpecifierAstNode>? Specifiers { get; }
         public DeclaratorAstNode Declarator { get; }

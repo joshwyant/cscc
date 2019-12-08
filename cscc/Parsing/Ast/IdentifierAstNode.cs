@@ -2,7 +2,7 @@ using cscc.Lexing;
 
 namespace cscc.Parsing.Ast
 {
-    class IdentifierAstNode : ExpressionAstNode
+    public class IdentifierAstNode : ExpressionAstNode
     {
         public string Identifier { get; }
         public IdentifierAstNode(string identifier, int line, int column)

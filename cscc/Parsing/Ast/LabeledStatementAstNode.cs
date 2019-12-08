@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    class LabeledStatementAstNode : StatementAstNode
+    public class LabeledStatementAstNode : StatementAstNode
     {
         public LabelAstNode Label { get; }
         public StatementAstNode Statement { get; }

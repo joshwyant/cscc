@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    class CaseLabelAstNode : LabelAstNode
+    public class CaseLabelAstNode : LabelAstNode
     {
         public ExpressionAstNode ConstantExpression { get; }
         public CaseLabelAstNode(

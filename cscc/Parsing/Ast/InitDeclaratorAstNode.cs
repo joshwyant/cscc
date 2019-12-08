@@ -2,7 +2,7 @@ using System;
 
 namespace cscc.Parsing.Ast
 {
-    class InitDeclaratorAstNode : DeclaratorAstNode
+    public class InitDeclaratorAstNode : DeclaratorAstNode
     {
         DeclaratorAstNode Declarator { get; }
         public InitializerAstNode Initializer { get; }

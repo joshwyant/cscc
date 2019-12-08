@@ -3,7 +3,7 @@ using cscc.Lexing;
 
 namespace cscc.Parsing.Ast
 {
-    abstract class StructOrUnionSpecifierAstNode : SpecifierAstNode
+    public abstract class StructOrUnionSpecifierAstNode : SpecifierAstNode
     {
         public string? Name { get; }
         public IReadOnlyList<StructDeclarationAstNode>? StructDeclarationList { get; }

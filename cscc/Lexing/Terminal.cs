@@ -1,6 +1,6 @@
 namespace cscc.Lexing
 {
-    enum Terminal
+    public enum Terminal
     {
         None,
         Unknown,

@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    class ForStatementAstNode : StatementAstNode
+    public class ForStatementAstNode : StatementAstNode
     {
         public ExpressionAstNode? InitializationExpression { get; }
         public ExpressionAstNode? ConditionExpression { get; }

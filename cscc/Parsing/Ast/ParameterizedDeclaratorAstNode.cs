@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    class ParameterizedDeclaratorAstNode : DeclaratorAstNode
+    public class ParameterizedDeclaratorAstNode : DeclaratorAstNode
     {
         public DeclaratorAstNode? Declarator { get; }
         public ParameterTypeListAstNode ParameterTypeList { get; }

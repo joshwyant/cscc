@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace cscc.Parsing.Ast
 {
-    class StructDeclarationAstNode : DeclarationAstNode
+    public class StructDeclarationAstNode : DeclarationAstNode
     {
         IReadOnlyList<DeclaratorAstNode>? StructDeclaratorList { get; }
         public StructDeclarationAstNode(

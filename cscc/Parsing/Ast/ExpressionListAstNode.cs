@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace cscc.Parsing.Ast
 {
-    class ExpressionListAstNode : ExpressionAstNode
+    public class ExpressionListAstNode : ExpressionAstNode
     {
         public IReadOnlyList<ExpressionAstNode> List { get; }
         public ExpressionListAstNode(

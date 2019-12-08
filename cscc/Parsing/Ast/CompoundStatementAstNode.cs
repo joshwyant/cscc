@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace cscc.Parsing.Ast
 {
-    class CompoundStatementAstNode : StatementAstNode
+    public class CompoundStatementAstNode : StatementAstNode
     {
         public IReadOnlyList<DeclarationAstNode> DeclarationList { get; }
         public IReadOnlyList<StatementAstNode> StatementList { get; }  

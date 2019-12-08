@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    class BitFieldDeclaratorAstNode : DeclaratorAstNode
+    public class BitFieldDeclaratorAstNode : DeclaratorAstNode
     {
         public DeclaratorAstNode? Declarator { get; }
         public ExpressionAstNode BitPosition { get; }

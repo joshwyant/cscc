@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace cscc.Parsing.Ast
 {
-    class InitializerListAstNode : InitializerAstNode
+    public class InitializerListAstNode : InitializerAstNode
     {
         public IReadOnlyList<InitializerAstNode>? List { get; }
         public InitializerListAstNode(

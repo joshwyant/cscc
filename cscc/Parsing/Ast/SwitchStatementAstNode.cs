@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    class SwitchStatementAstNode : StatementAstNode
+    public class SwitchStatementAstNode : StatementAstNode
     {
         public ExpressionAstNode Expression { get; }
         public StatementAstNode Statement { get; }

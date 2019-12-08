@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    abstract class AstNode
+    public abstract class AstNode
     {
         public AstNode(int line, int column)
         {

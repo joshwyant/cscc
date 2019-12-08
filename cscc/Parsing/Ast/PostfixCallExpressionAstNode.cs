@@ -3,7 +3,7 @@ using cscc.Lexing;
 
 namespace cscc.Parsing.Ast
 {
-    class PostfixCallExpressionAstNode : ExpressionAstNode
+    public class PostfixCallExpressionAstNode : ExpressionAstNode
     {
         public ExpressionAstNode Function { get; }
         public IReadOnlyList<ExpressionAstNode>? Parameters { get; }

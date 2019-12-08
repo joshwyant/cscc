@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace cscc.Parsing.Ast
 {
-    class FunctionDefinitionAstNode : DeclarationAstNode
+    public class FunctionDefinitionAstNode : DeclarationAstNode
     {
         public DeclaratorAstNode? Declarator { get; }
         public string? Name => Declarator?.Name;

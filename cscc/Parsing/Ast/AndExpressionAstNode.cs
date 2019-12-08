@@ -3,7 +3,7 @@ using static cscc.Lexing.Terminal;
 
 namespace cscc.Parsing.Ast
 {
-    class AndExpressionAstNode : BinaryExpressionAstNode
+    public class AndExpressionAstNode : BinaryExpressionAstNode
     {
         public AndExpressionAstNode(ExpressionAstNode e1, 
             ExpressionAstNode e2, int line, int column)

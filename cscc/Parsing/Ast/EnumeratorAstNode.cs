@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    class EnumeratorAstNode : AstNode
+    public class EnumeratorAstNode : AstNode
     {
         public string Name { get; }
         public ExpressionAstNode? Value { get; }

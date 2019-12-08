@@ -1,6 +1,6 @@
 namespace cscc.Parsing.Ast
 {
-    class InitializerExpressionAstNode : InitializerAstNode
+    public class InitializerExpressionAstNode : InitializerAstNode
     {
         public ExpressionAstNode Expression { get; }
         public InitializerExpressionAstNode(

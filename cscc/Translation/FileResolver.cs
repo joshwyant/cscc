@@ -4,7 +4,7 @@ using System.Text;
 
 namespace cscc.Translation
 {
-    class FileResolver
+    public class FileResolver
     {
         public virtual TextReader ResolveTextReader(string filename, FileType fileType = default, Encoding? encoding = null)
         {

@@ -2,12 +2,88 @@ using cscc.Parsing.Ast;
 
 namespace cscc.Translation
 {
-    interface IAstVisitor
+    public interface IAstVisitor
     {
         void VisitAdditiveExpression(AdditiveExpressionAstNode node);
         void VisitAndExpression(AndExpressionAstNode node);
         void VisitAssignmentExpression(AssignmentExpressionAstNode node);
+        void Visit(AstNode node);
         void VisitBinaryExpression(BinaryExpressionAstNode node);
-        // ... TODO
+        void VisitBitFieldDeclarator(BitFieldDeclaratorAstNode node);
+        void VisitBreakStatement(BreakStatementAstNode node);
+        void VisitCaseLabel(CaseLabelAstNode node);
+        void VisitCastExpression(CastExpressionAstNode node);
+        void VisitCharacterConstant(CharacterConstantAstNode node);
+        void VisitCompoundStatement(CompoundStatementAstNode node);
+        void VisitConditionalExpression(ConditionalExpressionAstNode node);
+        void VisitConstantExpression(ConstantExpressionAstNode node);
+        void VisitContinueStatement(ContinueStatementAstNode node);
+        void VisitDeclaration(DeclarationAstNode node);
+        void VisitDeclarationStatement(DeclarationStatementAstNode node);
+        void VisitDeclarator(DeclaratorAstNode node);
+        void VisitDefaultLabel(DefaultLabelAstNode node);
+        void VisitDoStatement(DoStatementAstNode node);
+        void VisitEnumerationConstant(EnumerationConstantAstNode node);
+        void VisitEnumerator(EnumeratorAstNode node);
+        void VisitEnumSpecifier(EnumSpecifierAstNode node);
+        void VisitEqualityExpression(EqualityExpressionAstNode node);
+        void VisitExpression(ExpressionAstNode node);
+        void VisitExpressionList(ExpressionListAstNode node);
+        void VisitExpressionStatement(ExpressionStatementAstNode node);
+        void VisitFloatingConstant(FloatingConstantAstNode node);
+        void VisitForStatement(ForStatementAstNode node);
+        void VisitFunctionDefinition(FunctionDefinitionAstNode node);
+        void VisitGotoStatement(GotoStatementAstNode node);
+        void VisitIdentifier(IdentifierAstNode node);
+        void VisitIdentifierDeclarator(IdentifierDeclaratorAstNode node);
+        void VisitIdentifierLabel(IdentifierLabelAstNode node);
+        void VisitIfStatement(IfStatementAstNode node);
+        void VisitIndexedDeclarator(IndexedDeclaratorAstNode node);
+        void VisitInitDeclarator(InitDeclaratorAstNode node);
+        void VisitInitializer(InitializerAstNode node);
+        void VisitExpression(InitializerExpressionAstNode node);
+        void VisitInitializerList(InitializerListAstNode node);
+        void VisitIntegerConstant(IntegerConstantAstNode node);
+        void VisitJumpStatement(JumpStatementAstNode node);
+        void VisitLabel(LabelAstNode node);
+        void VisitLabeledStatement(LabeledStatementAstNode node);
+        void VisitLogicalAndExpression(LogicalAndExpressionAstNode node);
+        void VisitLogicalOrExpression(LogicalOrExpressionAstNode node);
+        void VisitMultiplicativeExpression(MultiplicativeExpressionAstNode node);
+        void VisitNestedDeclarator(NestedDeclaratorAstNode node);
+        void VisitOldStyleParameterizedDeclarator(OldStyleParameterizedDeclaratorAstNode node);
+        void VisitOrExpression(OrExpressionAstNode node);
+        void VisitParameterDeclaration(ParameterDeclarationAstNode node);
+        void VisitParameterizedDeclarator(ParameterizedDeclaratorAstNode node);
+        void VisitParameterTypeList(ParameterTypeListAstNode node);
+        void VisitPointer(PointerAstNode node);
+        void VisitPointerDeclarator(PointerDeclaratorAstNode node);
+        void VisitPostfixCallExpression(PostfixCallExpressionAstNode node);
+        void VisitPostfixExpression(PostfixExpressionAstNode node);
+        void VisitPostfixIndexerExpression(PostfixIndexerExpressionAstNode node);
+        void VisitPostfixMemberAccessExpression(PostfixMemberAccessExpressionAstNode node);
+        void VisitPostfixPointerAccessExpression(PostfixPointerAccessExpressionAstNode node);
+        void VisitPostfixUnaryExpression(PostfixUnaryExpressionAstNode node);
+        void VisitRelationalExpression(RelationalExpressionAstNode node);
+        void VisitReturnStatement(ReturnStatementAstNode node);
+        void VisitShiftExpression(ShiftExpressionAstNode node);
+        void VisitSizeofTypeExpression(SizeofTypeExpressionAstNode node);
+        void VisitSpecifier(SpecifierAstNode node);
+        void VisitStatement(StatementAstNode node);
+        void VisitStorageClassSpecifier(StorageClassSpecifierAstNode node);
+        void VisitStringLiteral(StringLiteralAstNode node);
+        void VisitStruct(StructAstNode node);
+        void VisitStructDeclaration(StructDeclarationAstNode node);
+        void VisitStructOrUnionSpecifier(StructOrUnionSpecifierAstNode node);
+        void VisitSwitchStatement(SwitchStatementAstNode node);
+        void VisitTypedefName(TypedefNameAstNode node);
+        void VisitTypeName(TypeNameAstNode node);
+        void VisitTypeQualifier(TypeQualifierAstNode node);
+        void VisitTypeSpecifier(TypeSpecifierAstNode node);
+        void VisitUnaryExpression(UnaryExpressionAstNode node);
+        void VisitUnion(UnionAstNode node);
+        void VisitVariableDeclaration(VariableDeclarationAstNode node);
+        void VisitWhileStatement(WhileStatementAstNode node);
+        void VisitXorExpression(XorExpressionAstNode node);
     }
 }

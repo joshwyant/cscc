@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace cscc.Parsing.Ast
 {
-    class PointerAstNode : AstNode
+    public class PointerAstNode : AstNode
     {
         public IReadOnlyList<TypeQualifierAstNode>? TypeQualifierList { get; }
         public PointerAstNode? OuterPointer { get; }

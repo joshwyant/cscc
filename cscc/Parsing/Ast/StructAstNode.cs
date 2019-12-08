@@ -4,7 +4,7 @@ using static cscc.Lexing.Terminal;
 
 namespace cscc.Parsing.Ast
 {
-    class StructAstNode : StructOrUnionSpecifierAstNode
+    public class StructAstNode : StructOrUnionSpecifierAstNode
     {
         public StructAstNode(
             string? name,

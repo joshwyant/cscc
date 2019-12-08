@@ -3,7 +3,7 @@ using static cscc.Lexing.Terminal;
 
 namespace cscc.Parsing.Ast
 {
-    class EnumSpecifierAstNode : SpecifierAstNode
+    public class EnumSpecifierAstNode : SpecifierAstNode
     {
         IReadOnlyList<EnumeratorAstNode>? EnumeratorList { get; }
         public EnumSpecifierAstNode(string? name, 

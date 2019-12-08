@@ -2,7 +2,7 @@ using cscc.Lexing;
 
 namespace cscc.Parsing.Ast
 {
-    class PostfixIndexerExpressionAstNode : ExpressionAstNode
+    public class PostfixIndexerExpressionAstNode : ExpressionAstNode
     {
         public ExpressionAstNode LValue { get; }
         public ExpressionAstNode Index { get; }

@@ -1,6 +1,6 @@
 namespace cscc.Translation
 {
-    enum FileType
+    public enum FileType
     {
         Unknown,
         CSource,
