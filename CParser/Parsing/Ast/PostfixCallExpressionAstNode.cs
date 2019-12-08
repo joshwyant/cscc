@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using cscc.Lexing;
+using CParser.Lexing;
 
-namespace cscc.Parsing.Ast
+namespace CParser.Parsing.Ast
 {
     public class PostfixCallExpressionAstNode : ExpressionAstNode
     {

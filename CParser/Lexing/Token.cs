@@ -1,6 +1,6 @@
-using cscc.Translation;
+using CParser.Translation;
 
-namespace cscc.Lexing
+namespace CParser.Lexing
 {
     class Token
     {

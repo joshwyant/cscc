@@ -1,4 +1,4 @@
-namespace cscc.Translation
+namespace CParser.Translation
 {
     class CompileError
     {

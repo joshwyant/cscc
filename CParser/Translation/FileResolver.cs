@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace cscc.Translation
+namespace CParser.Translation
 {
     public class FileResolver
     {

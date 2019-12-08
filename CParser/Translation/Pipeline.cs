@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using cscc.Lexing;
-using cscc.Parsing;
-using cscc.Parsing.Ast;
-using cscc.Preprocessing;
+using CParser.Lexing;
+using CParser.Parsing;
+using CParser.Parsing.Ast;
+using CParser.Preprocessing;
 
-namespace cscc.Translation
+namespace CParser.Translation
 {
     public class Pipeline
     {

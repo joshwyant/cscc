@@ -1,6 +1,6 @@
-using cscc.Translation;
-using cscc.Helpers;
-using cscc.Lexing;
+using CParser.Translation;
+using CParser.Helpers;
+using CParser.Lexing;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,9 +8,9 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using static cscc.Lexing.Terminal;
+using static CParser.Lexing.Terminal;
 
-namespace cscc.Preprocessing
+namespace CParser.Preprocessing
 {
     class Preprocessor : IStream<Token>
     {

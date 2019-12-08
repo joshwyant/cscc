@@ -1,4 +1,4 @@
-namespace cscc.Lexing
+namespace CParser.Lexing
 {
     public class FloatingToken : ValueToken<decimal>
     {

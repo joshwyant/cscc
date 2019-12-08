@@ -1,9 +1,9 @@
 using System;
-using cscc.Parsing.Ast;
-using static cscc.Lexing.Terminal;
-using cscc.Lexing;
+using CParser.Parsing.Ast;
+using static CParser.Lexing.Terminal;
+using CParser.Lexing;
 
-namespace cscc.Translation
+namespace CParser.Translation
 {
     public abstract class DefaultAstVisitor : IAstVisitor
     {

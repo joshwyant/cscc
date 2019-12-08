@@ -1,5 +1,5 @@
-using cscc.Translation;
-using cscc.Helpers;
+using CParser.Translation;
+using CParser.Helpers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,11 +7,11 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using static cscc.Lexing.Terminal;
-using static cscc.Lexing.LexerState;
-using static cscc.Translation.SymbolType;
+using static CParser.Lexing.Terminal;
+using static CParser.Lexing.LexerState;
+using static CParser.Translation.SymbolType;
 
-namespace cscc.Lexing
+namespace CParser.Lexing
 {
     class Lexer : IStream<Token>
     {

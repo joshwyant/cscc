@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using cscc.Helpers;
-using cscc.Lexing;
-using cscc.Parsing.Ast;
-using cscc.Translation;
+using CParser.Helpers;
+using CParser.Lexing;
+using CParser.Parsing.Ast;
+using CParser.Translation;
 
-namespace cscc.Parsing
+namespace CParser.Parsing
 {
     class ExpressionParser : Parser
     {

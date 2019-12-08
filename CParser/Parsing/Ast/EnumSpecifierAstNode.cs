@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using static cscc.Lexing.Terminal;
+using static CParser.Lexing.Terminal;
 
-namespace cscc.Parsing.Ast
+namespace CParser.Parsing.Ast
 {
     public class EnumSpecifierAstNode : SpecifierAstNode
     {

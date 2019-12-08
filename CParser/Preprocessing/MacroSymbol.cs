@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using cscc.Translation;
-using cscc.Lexing;
+using CParser.Translation;
+using CParser.Lexing;
 using System.Linq;
-using cscc.Parsing.Ast;
+using CParser.Parsing.Ast;
 
-namespace cscc.Preprocessing
+namespace CParser.Preprocessing
 {
     class MacroSymbol : Symbol
     {

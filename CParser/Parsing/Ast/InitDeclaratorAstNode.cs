@@ -1,6 +1,6 @@
 using System;
 
-namespace cscc.Parsing.Ast
+namespace CParser.Parsing.Ast
 {
     public class InitDeclaratorAstNode : DeclaratorAstNode
     {

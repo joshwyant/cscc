@@ -1,6 +1,6 @@
-using cscc.Parsing.Ast;
+using CParser.Parsing.Ast;
 
-namespace cscc.Translation
+namespace CParser.Translation
 {
     // Implements DefaultAstVisitor using empty visitors,
     // so that inheritors may implement a subset of the visitors.

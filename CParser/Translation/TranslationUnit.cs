@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using cscc.Lexing;
-using static cscc.Lexing.LexerState;
+using CParser.Lexing;
+using static CParser.Lexing.LexerState;
 
-namespace cscc.Translation
+namespace CParser.Translation
 {
     class TranslationUnit
     {

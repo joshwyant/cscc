@@ -1,4 +1,4 @@
-namespace cscc.Parsing.Ast
+namespace CParser.Parsing.Ast
 {
     public class IfStatementAstNode : StatementAstNode
     {

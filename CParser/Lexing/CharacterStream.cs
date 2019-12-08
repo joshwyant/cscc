@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using cscc.Helpers;
+using CParser.Helpers;
 
-namespace cscc.Lexing
+namespace CParser.Lexing
 {
     class CharacterStream : IStream<char>, IDisposable
     {

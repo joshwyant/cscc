@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace cscc.Helpers
+namespace CParser.Helpers
 {
     interface IStream<T> : IAsyncEnumerable<T>
     {

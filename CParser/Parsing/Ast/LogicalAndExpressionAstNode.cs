@@ -1,7 +1,7 @@
-using cscc.Lexing;
-using static cscc.Lexing.Terminal;
+using CParser.Lexing;
+using static CParser.Lexing.Terminal;
 
-namespace cscc.Parsing.Ast
+namespace CParser.Parsing.Ast
 {
     public class LogicalAndExpressionAstNode : BinaryExpressionAstNode
     {

@@ -1,16 +1,16 @@
-using cscc.Translation;
-using cscc.Helpers;
-using cscc.Lexing;
+using CParser.Translation;
+using CParser.Helpers;
+using CParser.Lexing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using cscc.Parsing.Ast;
-using static cscc.Lexing.Terminal;
-using static cscc.Translation.SymbolType;
+using CParser.Parsing.Ast;
+using static CParser.Lexing.Terminal;
+using static CParser.Translation.SymbolType;
 using System.Threading.Tasks;
 
-namespace cscc.Parsing
+namespace CParser.Parsing
 {
     class Parser : IAsyncEnumerable<AstNode>
     {

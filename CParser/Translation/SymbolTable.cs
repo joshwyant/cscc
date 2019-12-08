@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
-namespace cscc.Translation
+namespace CParser.Translation
 {
     class SymbolTable : IDictionary<string, Symbol>
     {

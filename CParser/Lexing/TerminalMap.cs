@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using static cscc.Lexing.Terminal;
+using static CParser.Lexing.Terminal;
 
-namespace cscc.Lexing
+namespace CParser.Lexing
 {
     static class TerminalMap
     {

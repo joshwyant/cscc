@@ -1,7 +1,7 @@
 using System;
-using cscc.Parsing.Ast;
+using CParser.Parsing.Ast;
 
-namespace cscc.Translation
+namespace CParser.Translation
 {
     class BasicSymbol : Symbol
     {
