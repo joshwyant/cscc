@@ -2,7 +2,7 @@ using CParser.Translation;
 
 namespace CParser.Lexing
 {
-    class Token
+    public class Token
     {
         public Token(Terminal kind, int line, int column, string filename)
         {

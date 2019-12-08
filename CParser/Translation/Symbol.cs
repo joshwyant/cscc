@@ -3,7 +3,7 @@ using CParser.Parsing.Ast;
 
 namespace CParser.Translation
 {
-    abstract class Symbol
+    public abstract class Symbol
     {
         public SymbolType Type { get; }
         public string Name { get; }

@@ -113,8 +113,8 @@ namespace CParser.Lexing
                             || symbol.Type == TypedefSymbol))
                     {
                         yield return symbol.Type == TypedefSymbol 
-                            ? new ValueToken<Symbol>(TypedefName, line, column, filename, symbol) 
-                            : new ValueToken<EnumSymbol>(EnumConstant, line, column, filename, (symbol as EnumSymbol)!);
+                            ? new ValueToken<Symbol>(TypedefName, line, column, filename, symbol) as Token
+                            : new ValueToken<EnumSymbol>(EnumConstant, line, column, filename, (symbol as EnumSymbol)!) as Token;
                     }
                     else
                     {
@@ -140,7 +140,7 @@ namespace CParser.Lexing
                             {
                                 c = await InputStream.Read();
                                 integer *= 0x10;
-                                integer += char.IsDigit(c) ? c - '0' : c - 'a' + 0xa;
+                                integer += (ulong)(char.IsDigit(c) ? c - '0' : c - 'a' + 0xa);
                             }
                             hexOrOctal = true;
                         }
@@ -150,7 +150,7 @@ namespace CParser.Lexing
                             {
                                 c = await InputStream.Read();
                                 integer *= 8;
-                                integer += c - '0';
+                                integer += (ulong)(c - '0');
                             }
                             hexOrOctal = true;
                         }
@@ -161,7 +161,7 @@ namespace CParser.Lexing
                         {
                             c = await InputStream.Read();
                             integer *= 10;
-                            integer += c - '0';
+                            integer += (ulong)(c - '0');
                         }
                         if (await InputStream.Peek() == '.')
                         {
@@ -182,7 +182,7 @@ namespace CParser.Lexing
                             var multiplier = 10M;
                             var e = 0;
                             await InputStream.Read();
-                            if ((c = await InputStream.Peek()) == '+' || '-')
+                            if ((c = await InputStream.Peek()) == '+' || c == '-')
                             {
                                 await InputStream.Read();
                                 multiplier = c == '-' ? 0.1M : 10M;
@@ -195,7 +195,8 @@ namespace CParser.Lexing
                             }
                             for (var i = 0; i < e; i++)
                             {
-                                if (Math.Abs(real - System.Double.Epsilon) < 0.1M || Math.Abs(real - System.Double.Epsilon) > 10M)
+                                var delta = Math.Abs(real - (decimal)System.Double.Epsilon);
+                                if (delta < 0.1M || delta > 10M)
                                 {
                                     break;
                                 }
@@ -392,7 +393,7 @@ namespace CParser.Lexing
                             }
                             yield return PreprocessorTokens 
                                 ? new Token(Pound, line, column, filename)
-                                : new ValueToken<char>(Unknown, line, column, filename, '#');
+                                : new ValueToken<char>(Terminal.Unknown, line, column, filename, '#');
                             break;
                         case '(':
                             yield return new Token(LeftParen, line, column, filename);
@@ -657,7 +658,7 @@ namespace CParser.Lexing
                             }
                             break;
                         default:
-                            yield return new ValueToken<char>(Unknown, line, column, filename, c);
+                            yield return new ValueToken<char>(Terminal.Unknown, line, column, filename, c);
                             break;
                     }
                 }

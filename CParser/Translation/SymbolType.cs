@@ -1,6 +1,6 @@
 namespace CParser.Translation
 {
-    enum SymbolType
+    public enum SymbolType
     {
         Unknown,
         DefineSymbol,

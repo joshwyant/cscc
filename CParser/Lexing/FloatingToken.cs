@@ -4,7 +4,7 @@ namespace CParser.Lexing
     {
         public bool HasFloatSpecifier { get; }
         public FloatingToken(int line, int column, string filename, decimal value, bool hasFloatSpecifier)
-            : base(line, column, filename, value)
+            : base(Terminal.FloatingConstant, line, column, filename, value)
         {
             HasFloatSpecifier = hasFloatSpecifier;
         }

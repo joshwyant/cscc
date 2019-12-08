@@ -1,4 +1,5 @@
 using CParser.Lexing;
+using CParser.Translation;
 
 namespace CParser.Parsing.Ast
 {

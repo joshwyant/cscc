@@ -513,7 +513,7 @@ namespace CParser.Parsing
             }
             await AddSymbol(
                 TranslationUnit.Symbols, 
-                EnumSymbol,
+                SymbolType.EnumSymbol,
                 ident.Value, 
                 node);
             return node;
@@ -1275,7 +1275,7 @@ namespace CParser.Parsing
             var (line, column) = await Metrics();
             if ((t = await CheckAndGet(IntegerConstant)) != default)
             {
-                return new IntegerConstantAstNode(t! as IntegerToken);
+                return new IntegerConstantAstNode((t as IntegerToken)!);
             }
             else if ((t = await CheckAndGet(CharLiteral)) != default)
             {
@@ -1283,7 +1283,7 @@ namespace CParser.Parsing
             }
             else if ((t = await CheckAndGet(FloatingConstant)) != default)
             {
-                return new FloatingConstantAstNode(t! as FloatingToken);
+                return new FloatingConstantAstNode((t as FloatingToken)!);
             }
             else if ((t = await CheckAndGet(EnumConstant)) != default)
             {
