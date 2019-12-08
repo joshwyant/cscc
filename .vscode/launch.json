@@ -5,14 +5,14 @@
    "version": "0.2.0",
    "configurations": [
         {
-            "name": ".NET Core Launch cscc (console)",
+            "name": ".NET Core Launch CParser (console)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/cscc/bin/Debug/netcoreapp3.1/cscc.dll",
+            "program": "${workspaceFolder}/CParser/bin/Debug/netcoreapp3.1/CParser.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/cscc",
+            "cwd": "${workspaceFolder}/CParser",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false
