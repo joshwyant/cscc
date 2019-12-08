@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\cscc\cscc.csproj" />
+    <ProjectReference Include="..\CParser\CParser.csproj" />
   </ItemGroup>
 
 </Project>
