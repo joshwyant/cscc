@@ -1,6 +1,6 @@
 namespace CParser.Lexing
 {
-    enum LexerState
+    public enum LexerState
     {
         LexerReady,
         LexingLibraryFilename

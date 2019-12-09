@@ -4,7 +4,7 @@ using static CParser.Lexing.LexerState;
 
 namespace CParser.Translation
 {
-    class TranslationUnit
+    public class TranslationUnit
     {
         public SymbolTable Defines { get; }
 

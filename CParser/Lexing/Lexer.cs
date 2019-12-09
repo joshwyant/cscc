@@ -13,7 +13,7 @@ using static CParser.Translation.SymbolType;
 
 namespace CParser.Lexing
 {
-    class Lexer : IStream<Token>
+    public class Lexer : IStream<Token>
     {
         public TranslationUnit TranslationUnit { get; }
         protected StreamWrapper<Token> OutputStream { get; }
@@ -101,7 +101,7 @@ namespace CParser.Lexing
                     Symbol symbol;
                     while ((c = await InputStream.Peek()) == '_' || char.IsLetter(c) || char.IsDigit(c))
                     {
-                        sb.Append(c);
+                        sb.Append(await InputStream.Read());
                     }
                     var ident = sb.ToString();
                     if (ReservedWords.ContainsKey(ident))
@@ -273,10 +273,11 @@ namespace CParser.Lexing
                         {
                             char delimeter = c;
                             var sb = new StringBuilder();
-                            while (!await InputStream.Eof() && (c = await InputStream.Peek()) != delimeter && c != '\r' && c == '\n')
+                            while (!await InputStream.Eof() && (c = await InputStream.Peek()) != delimeter && c != '\r' && c != '\n')
                             {
                                 if (c == '\\')
                                 {
+                                    await InputStream.Read();
                                     if (!await InputStream.Eof())
                                     {
                                         c = await InputStream.Read();

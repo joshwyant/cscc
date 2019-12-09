@@ -21,5 +21,20 @@ namespace CParser.Lexing
         {
             return new Token(Kind, line, column, filename);
         }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Token ? (obj as Token)!.Kind == Kind : false;
+        }
+
+        public override int GetHashCode()
+        {
+            return Kind.GetHashCode();
+        }
+
+        public override string? ToString()
+        {
+            return TerminalMap.Name(Kind);
+        }
     }
 }

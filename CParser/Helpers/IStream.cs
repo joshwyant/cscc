@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace CParser.Helpers
 {
-    interface IStream<T> : IAsyncEnumerable<T>
+    public interface IStream<T> : IAsyncEnumerable<T>
     {
         T Sentinel { get; }
         void PutBack(T val);

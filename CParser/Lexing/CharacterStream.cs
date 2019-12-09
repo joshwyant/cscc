@@ -8,9 +8,8 @@ using CParser.Helpers;
 
 namespace CParser.Lexing
 {
-    class CharacterStream : IStream<char>, IDisposable
+    public class CharacterStream : IStream<char>, IDisposable
     {
-        ConcurrentQueue<Task<int>> queue = new ConcurrentQueue<Task<int>>();
         const int BUFFER_SIZE = 4096;
         char[] buffer = new char[BUFFER_SIZE];
         public char Sentinel => '\uFFFF';
@@ -40,6 +39,7 @@ namespace CParser.Lexing
                     yield return buffer[i];
                 }
             }
+            yield return Sentinel;
         }
 
         public async Task<bool> Eof()

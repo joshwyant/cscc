@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace CParser.Translation
 {
-    class SymbolTable : IDictionary<string, Symbol>
+    public class SymbolTable : IDictionary<string, Symbol>
     {
         public SymbolTable? Parent { get; }
         protected Dictionary<string, Symbol> Symbols { get; }

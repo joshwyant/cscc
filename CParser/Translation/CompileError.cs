@@ -1,6 +1,6 @@
 namespace CParser.Translation
 {
-    class CompileError
+    public class CompileError
     {
         public int Line { get; }
         public int Column { get; }

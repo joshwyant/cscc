@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace CParser.Helpers
 {
-    class StreamWrapper<T> : IStream<T>
+    public class StreamWrapper<T> : IStream<T>
     {
         private IAsyncEnumerable<T> Source { get; }
         private IAsyncEnumerator<T> SourceEnumerator { get; }
@@ -61,6 +61,10 @@ namespace CParser.Helpers
             }
             if (await SourceEnumerator.MoveNextAsync())
             {
+                if (SourceEnumerator.Current!.Equals(Sentinel))
+                {
+                    return true;
+                }
                 PutBack(SourceEnumerator.Current);
                 return false;
             }
