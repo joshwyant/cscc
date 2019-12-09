@@ -15,5 +15,10 @@ namespace CParser.Lexing
         {
             return new ValueToken<T>(Kind, line, column, filename, Value);
         }
+
+        public override string? ToString()
+        {
+            return Value?.ToString();
+        }
     }
 }

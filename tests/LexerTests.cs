@@ -20,19 +20,27 @@ namespace tests
         }
 
         [Fact]
-        public async void Test1()
+        public async void TestTokenSequence()
         {
             var program = 
                 @"int main() {
                     printf(""Hello, world!\n"");
                 }";
             var lexer = CreateTestLexer(program, false);
+            var tokens = (await lexer.AsEnumerable()).ToList();
             Assert.Equal(new[] { 
                     Int, Identifier, LeftParen, RightParen, LeftBrace,
                     Identifier, LeftParen, StringLiteral, RightParen, Semicolon,
                     RightBrace,
                     Eof
-                }, (await lexer.AsEnumerable()).Terminals());
+                }, tokens.Terminals());
+
+            Assert.Equal(new[] { 
+                    "int", "main", "(", ")", "{",
+                    "printf", "(", "Hello, world!\n", ")", ";",
+                    "}",
+                    "end-of-file"
+                }, tokens.Select(t => t.ToString()));
         }
     }
 }
