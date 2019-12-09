@@ -17,7 +17,7 @@ namespace CParser.Translation
 
         public IAsyncEnumerable<AstNode> ParseFile(string filename, bool preprocess)
         {
-            var tu = new TranslationUnit(filename);
+            var tu = new TranslationUnit(FileResolver, filename);
             var reader = FileResolver.ResolveTextReader(filename);
             var preprocessor = new Preprocessor(tu, reader, preprocess);
             var parser = new Parser(tu, preprocessor);

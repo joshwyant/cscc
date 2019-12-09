@@ -8,19 +8,19 @@ using CParser.Helpers;
 
 namespace CParser.Lexing
 {
-    public class CharacterStream : IStream<char>, IDisposable
+    public class CharacterStream : IAsyncStream<char>, IDisposable
     {
         const int BUFFER_SIZE = 4096;
         char[] buffer = new char[BUFFER_SIZE];
         public char Sentinel => '\uFFFF';
         protected TextReader Reader { get; }
 
-        private StreamWrapper<char> Stream { get; }
+        private AsyncStreamWrapper<char> Stream { get; }
 
         public CharacterStream(TextReader reader)
         {
             Reader = reader;
-            Stream = new StreamWrapper<char>(Enumerate(), Sentinel);
+            Stream = new AsyncStreamWrapper<char>(Enumerate(), Sentinel);
         }
 
         private Task<int> read() => Reader.ReadAsync(buffer, 0, BUFFER_SIZE);

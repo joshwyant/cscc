@@ -9,7 +9,7 @@ namespace CParser.Parsing
 {
     class ExpressionParser : Parser
     {
-        public ExpressionParser(TranslationUnit translationUnit, IStream<Token> inputStream)
+        public ExpressionParser(TranslationUnit translationUnit, IAsyncStream<Token> inputStream)
             : base(translationUnit, inputStream)
         {
         }

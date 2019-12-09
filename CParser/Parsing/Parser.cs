@@ -15,9 +15,9 @@ namespace CParser.Parsing
     class Parser : IAsyncEnumerable<AstNode>
     {
         public TranslationUnit TranslationUnit { get; }
-        protected IStream<Token> InputStream { get; }
+        protected IAsyncStream<Token> InputStream { get; }
 
-        public Parser(TranslationUnit tu, IStream<Token> input)
+        public Parser(TranslationUnit tu, IAsyncStream<Token> input)
         {
             TranslationUnit = tu;
             InputStream = input;

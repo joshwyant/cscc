@@ -13,11 +13,11 @@ using static CParser.Translation.SymbolType;
 
 namespace CParser.Lexing
 {
-    public class Lexer : IStream<Token>
+    public class Lexer : IAsyncStream<Token>
     {
         public TranslationUnit TranslationUnit { get; }
-        protected StreamWrapper<Token> OutputStream { get; }
-        protected IStream<char> InputStream { get; }
+        protected AsyncStreamWrapper<Token> OutputStream { get; }
+        protected IAsyncStream<char> InputStream { get; }
         public Token Sentinel => 
             new Token(
                 Terminal.Eof, 
@@ -65,14 +65,14 @@ namespace CParser.Lexing
             { "while", While },
         };
 
-        public Lexer(TranslationUnit tu, IStream<char> input, bool preprocessorTokens, bool outputTrivia)
+        public Lexer(TranslationUnit tu, IAsyncStream<char> input, bool preprocessorTokens, bool outputTrivia)
         {
             TranslationUnit = tu;
             InputStream = input;
             PreprocessorTokens = preprocessorTokens;
             OutputTrivia = outputTrivia;
             Filename = tu.CurrentFilename;
-            OutputStream = new StreamWrapper<Token>(Lex());
+            OutputStream = new AsyncStreamWrapper<Token>(Lex());
         }
 
         protected async IAsyncEnumerable<Token> Lex()

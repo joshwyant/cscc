@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -6,24 +5,24 @@ using System.Threading.Tasks;
 
 namespace CParser.Helpers
 {
-    public class StreamWrapper<T> : IStream<T>
+    public class AsyncStreamWrapper<T> : IAsyncStream<T>
     {
-        private IEnumerable<T> Source { get; }
-        private IEnumerator<T> SourceEnumerator { get; }
+        private IAsyncEnumerable<T> Source { get; }
+        private IAsyncEnumerator<T> SourceEnumerator { get; }
         private Stack<T> Buffer { get; }
         public T Sentinel { get; }
 
-        public StreamWrapper(IEnumerable<T> source, T sentinel = default)
+        public AsyncStreamWrapper(IAsyncEnumerable<T> source, T sentinel = default)
         {
             Source = source;
             Buffer = new Stack<T>();
             Sentinel = sentinel;
-            SourceEnumerator = source.GetEnumerator();
+            SourceEnumerator = source.GetAsyncEnumerator();
         }
 
-        protected IEnumerable<T> Stream()
+        protected async IAsyncEnumerable<T> Stream()
         {
-            while (Buffer.Any() || SourceEnumerator.MoveNext())
+            while (Buffer.Any() || await SourceEnumerator.MoveNextAsync())
             {
                 if (Buffer.Any())
                 {
@@ -44,23 +43,23 @@ namespace CParser.Helpers
             Buffer.Push(val);
         }
 
-        public T Peek()
+        public async Task<T> Peek()
         {
-            return Eof() ? Sentinel : Buffer.Peek();
+            return await Eof() ? Sentinel : Buffer.Peek();
         }
 
-        public T Read()
+        public async Task<T> Read()
         {
-            return Eof() ? Sentinel : Buffer.Pop();
+            return await Eof() ? Sentinel : Buffer.Pop();
         }
 
-        public bool Eof()
+        public async Task<bool> Eof()
         {
             if (Buffer.Any())
             {
                 return false;
             }
-            if (SourceEnumerator.MoveNext())
+            if (await SourceEnumerator.MoveNextAsync())
             {
                 if (SourceEnumerator.Current!.Equals(Sentinel))
                 {
@@ -72,14 +71,9 @@ namespace CParser.Helpers
             return true;
         }
 
-        public IEnumerator<T> GetEnumerator()
+        public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
-            return Stream().GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return (this as IEnumerable<T>).GetEnumerator();
+            return Stream().GetAsyncEnumerator();
         }
     }
 }

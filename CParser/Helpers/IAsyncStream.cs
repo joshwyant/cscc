@@ -3,15 +3,15 @@ using System.Threading.Tasks;
 
 namespace CParser.Helpers
 {
-    public interface IStream<T> : IEnumerable<T>
+    public interface IAsyncStream<T> : IAsyncEnumerable<T>
     {
         T Sentinel { get; }
         void PutBack(T val);
 
-        T Peek();
+        Task<T> Peek();
 
-        T Read();
+        Task<T> Read();
 
-        bool Eof();
+        Task<bool> Eof();
     }
 }

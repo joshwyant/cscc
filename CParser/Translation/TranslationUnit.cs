@@ -6,6 +6,7 @@ namespace CParser.Translation
 {
     public class TranslationUnit
     {
+        public FileResolver FileResolver { get; }
         public SymbolTable Defines { get; }
 
         public SymbolTable Symbols { get; set; }
@@ -23,8 +24,9 @@ namespace CParser.Translation
         public string CurrentFilename { get; set; }
         public List<CompileError> Errors { get; }
 
-        public TranslationUnit(string currentFilename)
+        public TranslationUnit(FileResolver fileResolver, string currentFilename)
         {
+            FileResolver = fileResolver;
             Defines = new SymbolTable();
             Symbols = new SymbolTable();
             Tags = new SymbolTable();

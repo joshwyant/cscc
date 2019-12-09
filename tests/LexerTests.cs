@@ -14,7 +14,7 @@ namespace tests
         protected Lexer CreateTestLexer(string program, bool preprocess = true)
         {
             return new Lexer(
-                new TranslationUnit("test.c"), 
+                new TranslationUnit(new FileResolver(), "test.c"), 
                 new CharacterStream(new StringReader(program)), 
                 preprocess, preprocess);
         }
