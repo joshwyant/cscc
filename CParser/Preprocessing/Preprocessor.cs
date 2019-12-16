@@ -45,27 +45,19 @@ namespace CParser.Preprocessing
                     (block, func) => block.StreamAndChain(func));
         }
 
-        protected Task ProcessPipeline(TextReader reader, IPropagatorBlock<char, Token> pipeline)
+        protected async Task ProcessPipeline(TextReader reader, IPropagatorBlock<char, Token> pipeline)
         {
-            return Task.WhenAll(
-                pipeline.PostAllTextAsync(reader)
-                    .ContinueWith(delegate { 
-                        pipeline.Complete(); 
-                    }), 
-                pipeline.Completion);
+            await pipeline.PostAllTextAsync(reader);
+            pipeline.Complete();
         }
 
         protected Task ProcessPipeline(string filename, IPropagatorBlock<char, Token> pipeline)
         {
-            return Task.WhenAll(
-                pipeline.PostAllTextAsync(
+            return ProcessPipeline(
                     TranslationUnit
                         .FileResolver
-                        .ResolveTextReader(filename)
-                ).ContinueWith(delegate { 
-                    pipeline.Complete(); 
-                }),
-                pipeline.Completion);
+                        .ResolveTextReader(filename),
+                    pipeline);
         }
 
         protected IPropagatorBlock<char, Token> BasicPipeline(bool preprocessing)

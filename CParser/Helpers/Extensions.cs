@@ -78,13 +78,7 @@ namespace CParser.Helpers
                     transform.Post(buffer.Take(count));
                     buffer = new char[BUFFER_SIZE]; // Send new pages of data as they become available
                 }
-                transform.Complete();
             }
-            await transform
-                .Completion
-                .ContinueWith(delegate { 
-                    target.Complete(); 
-                });
         }
 
         public static IPropagatorBlock<TInput, TOutput> AsBlock<TInput, TOutput>(this AsyncStreamFunc<TInput, TOutput> func, TInput sentinel = default, CancellationToken cancellationToken = default)
@@ -97,7 +91,7 @@ namespace CParser.Helpers
         {
             source.LinkTo(
                     target, 
-                    options ?? new DataflowLinkOptions { PropagateCompletion = true }); // TODO: Is this appropriate?
+                    options ?? new DataflowLinkOptions { PropagateCompletion = true });
             return DataflowBlock.Encapsulate<TInput, TOutput>(source, target);
         }
 
