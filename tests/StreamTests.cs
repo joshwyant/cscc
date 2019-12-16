@@ -109,7 +109,7 @@ namespace tests
                 }
                 else
                 {
-                    await input.Read();
+                    yield break;
                 }
             }
         }
