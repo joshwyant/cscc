@@ -13,22 +13,22 @@ namespace CParser.Helpers
         // This block's output buffer
         protected BufferBlock<TOutput> SourceBlock { get; }
         protected CancellationToken CancellationToken { get; }
-        protected Func<IAsyncStream<TInput>, IAsyncEnumerable<TOutput>> Function { get; }
-        public AsyncStreamBlock(Func<IAsyncStream<TInput>, IAsyncEnumerable<TOutput>> function, CancellationToken cancellation = default)
+        protected AsyncStreamFunc<TInput, TOutput> Function { get; }
+        public AsyncStreamBlock(AsyncStreamFunc<TInput, TOutput> function, TInput sentinel = default(TInput), CancellationToken cancellation = default)
         {
             Function = function;
             TargetBlock = new BufferBlock<TInput>();
             SourceBlock = new BufferBlock<TOutput>();
             CancellationToken = cancellation;
 
-            var enumerable = TargetBlock.ReceiveAllAsync(CancellationToken);
-            var stream = new AsyncStreamWrapper<TInput>(enumerable);
-            var task = SourceBlock
-                .PostAllAsync(
-                    Function(stream), CancellationToken)
-                .ContinueWith(delegate {
-                    SourceBlock.Complete();
-                });
+            var task = Task.Run(() => 
+                SourceBlock
+                    .PostAllAsync(
+                        Function(TargetBlock.ToStream(sentinel)), 
+                        CancellationToken)
+                    .ContinueWith(delegate {
+                        SourceBlock.Complete();
+                    }));
             Completion = SourceBlock.Completion;
         }
 

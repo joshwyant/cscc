@@ -38,86 +38,63 @@ namespace CParser.Preprocessing
                 : TokenizeOnly();
         }
 
-        protected IPropagatorBlock<T, T> Compose<T>(params Func<IAsyncStream<T>, IAsyncEnumerable<T>>[] functions)
+        protected IPropagatorBlock<T, T> Compose<T>(params AsyncStreamFunc<T, T>[] functions)
         {
-            return functions
-                .Select(f => new AsyncStreamBlock<T, T>(f))
-                .Cast<IPropagatorBlock<T, T>>()
-                .Aggregate((block1, block2) =>
-                {
-                    block1.LinkTo(block2, new DataflowLinkOptions { PropagateCompletion = true });
-                    return DataflowBlock.Encapsulate(block1, block2);
-                });
+            return functions.Aggregate(
+                    (IPropagatorBlock<T, T>)new BufferBlock<T>(), 
+                    (block, func) => block.StreamAndChain(func));
         }
 
         protected Task ProcessPipeline(TextReader reader, IPropagatorBlock<char, Token> pipeline)
         {
-            return Task.WhenAll(pipeline.PostAllTextAsync(reader), pipeline.Completion);
+            return Task.WhenAll(
+                pipeline.PostAllTextAsync(reader)
+                    .ContinueWith(delegate { 
+                        pipeline.Complete(); 
+                    }), 
+                pipeline.Completion);
         }
 
         protected Task ProcessPipeline(string filename, IPropagatorBlock<char, Token> pipeline)
         {
-            var reader = TranslationUnit.FileResolver.ResolveTextReader(filename);
-            return Task.WhenAll(pipeline.PostAllTextAsync(reader), pipeline.Completion);
+            return Task.WhenAll(
+                pipeline.PostAllTextAsync(
+                    TranslationUnit
+                        .FileResolver
+                        .ResolveTextReader(filename)
+                ).ContinueWith(delegate { 
+                    pipeline.Complete(); 
+                }),
+                pipeline.Completion);
         }
 
         protected IPropagatorBlock<char, Token> BasicPipeline(bool preprocessing)
         {
-            var charPipeline = Compose<char>(CountLines, 
-                                             ReplaceTrigraphs, 
-                                             SpliceLines);
-            var lexerBlock = new AsyncStreamBlock<char, Token>
-                (charStream => new Lexer(TranslationUnit, charStream, preprocessing, preprocessing));
-
-            charPipeline.LinkTo(lexerBlock, new DataflowLinkOptions { PropagateCompletion = true });
-
-            return DataflowBlock.Encapsulate(charPipeline, lexerBlock);
+            return Compose<char>(CountLines, 
+                                 ReplaceTrigraphs, 
+                                 SpliceLines)
+                   .StreamAndChain(charStream => 
+                                       new Lexer(TranslationUnit, 
+                                                 charStream,
+                                                 preprocessing, preprocessing));
         }
 
         protected IPropagatorBlock<char, Token> IncludePipeline()
         {
-            // blocks
-            var basicPipeline = BasicPipeline(true);
-
-            var collectLines =
-                new AsyncStreamBlock<Token, IStream<Token>>(CollectLines);
-
-            var includeBlock 
-                = new AsyncStreamBlock<
-                    IStream<Token>, 
-                    BufferBlock<Token>>(IncludeFiles);
-
-            var assemblyBlock = new AsyncStreamBlock<BufferBlock<Token>, Token>
-                (AssembleBuffers);
-
-            // links
-            basicPipeline.LinkTo(collectLines, new DataflowLinkOptions { PropagateCompletion = true });
-            collectLines.LinkTo(includeBlock, new DataflowLinkOptions { PropagateCompletion = true });
-            includeBlock.LinkTo(assemblyBlock, new DataflowLinkOptions { PropagateCompletion = true });
-
-            // result
-            return DataflowBlock.Encapsulate(basicPipeline, assemblyBlock);
+            return BasicPipeline(true) // preprocess
+                    .StreamAndChain(stream =>
+                                        RemoveTrivia(stream, true)) // keep newlines
+                    .StreamAndChain(CollectLines)
+                    .StreamAndChain(IncludeFiles)
+                    .StreamAndChain(AssembleBuffers);
         }
 
         protected IPropagatorBlock<char, Token> FullPipeline()
         {
-            // blocks
-            var includePipeline = IncludePipeline();
-
-            var collectLines =
-                new AsyncStreamBlock<Token, IStream<Token>>(CollectLines);
-
-            var preprocessBlock 
-                = new AsyncStreamBlock<
-                    IStream<Token>, 
-                    Token>(DoPreprocess);
-
-            // links
-            includePipeline.LinkTo(collectLines, new DataflowLinkOptions { PropagateCompletion = true });
-            collectLines.LinkTo(preprocessBlock, new DataflowLinkOptions { PropagateCompletion = true });
-
-            // result
-            return DataflowBlock.Encapsulate(includePipeline, preprocessBlock);
+            return IncludePipeline()
+                    .StreamAndChain(CollectLines)
+                    .StreamAndChain(DoPreprocess)
+                    .StreamAndChain(stream => RemoveTrivia(stream)); // remove all the newlines
         }
 
         protected async IAsyncEnumerable<char> CountLines(IAsyncStream<char> input)
@@ -454,17 +431,29 @@ namespace CParser.Preprocessing
             return new TransformManyBlock<IEnumerable<Token>, Token>(tokens => tokens);
         }
 
+        protected async IAsyncEnumerable<Token> RemoveTrivia(IAsyncStream<Token> input, bool preserveNewlines = false)
+        {
+            await foreach (var token in input)
+            {
+                if (!preserveNewlines && token.Kind == Newline)
+                {
+                    continue;
+                }
+                else if (token.Kind != Whitespace && token.Kind != Comment)
+                {
+                    yield return token;
+                }
+            }
+        }
+
         protected async IAsyncEnumerable<Token> ScanLine(IAsyncStream<Token> input)
         {
             await foreach (var token in input)
             {
+                yield return token;
                 if (token.Kind == Newline)
                 {
                     yield break;
-                }
-                else if (token.Kind != Whitespace && token.Kind != Comment) // Won't need these anyway
-                {
-                    yield return token;
                 }
             }
         }
