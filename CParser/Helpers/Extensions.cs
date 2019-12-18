@@ -73,24 +73,14 @@ namespace CParser.Helpers
 
         public async static Task PostAllTextAsync(this ITargetBlock<char> target, TextReader source, CancellationToken cancellationToken = default)
         {
-            // var transform = new TransformManyBlock<IEnumerable<char>, char>(
-            //     input => input,
-            //     new ExecutionDataflowBlockOptions { CancellationToken = cancellationToken }
-            // );
-            // using (var link = transform.LinkTo(target))
+            var buffer = new char[BUFFER_SIZE];
+            int count;
+            while ((count = await source.ReadAsync(buffer, 0, BUFFER_SIZE)) > 0)
             {
-                var buffer = new char[BUFFER_SIZE];
-                int count;
-                while ((count = await source.ReadAsync(buffer, 0, BUFFER_SIZE)) > 0)
+                cancellationToken.ThrowIfCancellationRequested();
+                for (var i = 0; i < count; i++)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    // transform.Post(buffer.Take(count));
-                    // TODO: Get commented-out code to work rather than the loop below.
-                    for (var i = 0; i < count; i++)
-                    {
-                        target.Post(buffer[i]);
-                    }
-                    //buffer = new char[BUFFER_SIZE]; // Send new pages of data as they become available
+                    target.Post(buffer[i]);
                 }
             }
         }
