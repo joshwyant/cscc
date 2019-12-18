@@ -69,18 +69,18 @@ namespace CParser.Preprocessing
         {
             return BasicPipeline(true) // preprocess
                     .StreamAndChain(stream =>
-                                        RemoveTrivia(stream, true)) // keep newlines
-                    .StreamAndChain(CollectLines)
-                    .StreamAndChain(IncludeFiles)
-                    .StreamAndChain(AssembleBuffers);
+                                        RemoveTrivia(stream!, true)) // keep newlines
+                    .StreamAndChain(CollectLines!)
+                    .StreamAndChain(IncludeFiles!)
+                    .StreamAndChain(AssembleBuffers!);
         }
 
         protected IPropagatorBlock<char, Token> FullPipeline()
         {
             return IncludePipeline()
-                    .StreamAndChain(CollectLines)
-                    .StreamAndChain(DoPreprocess)
-                    .StreamAndChain(stream => RemoveTrivia(stream)); // remove all the newlines
+                    .StreamAndChain(CollectLines!)
+                    .StreamAndChain(DoPreprocess!)
+                    .StreamAndChain(stream => RemoveTrivia(stream!)); // remove all the newlines
         }
 
         protected async IAsyncEnumerable<char> CountLines(IAsyncStream<char> input)
