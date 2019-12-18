@@ -27,7 +27,33 @@ namespace tests
                     printf(""Hello, world!\n"");
                 }";
             var lexer = CreateTestLexer(program, false);
-            var tokens = (await lexer.AsEnumerable()).ToList();
+            var tokens = await lexer.AsList();
+            Assert.Equal(new[] { 
+                    Int, Identifier, LeftParen, RightParen, LeftBrace,
+                    Identifier, LeftParen, StringLiteral, RightParen, Semicolon,
+                    RightBrace,
+                    Eof
+                }, tokens.Terminals());
+
+            Assert.Equal(new[] { 
+                    "int", "main", "(", ")", "{",
+                    "printf", "(", "Hello, world!\n", ")", ";",
+                    "}",
+                    "end-of-file"
+                }, tokens.Select(t => t.ToString()));
+        }
+
+        [Fact]
+        public async void TestTokenSequenceBlock()
+        {
+            var program = 
+                @"int main() {
+                    printf(""Hello, world!\n"");
+                }";
+            var lexer = Lexer.AsBlock(new TranslationUnit(new FileResolver(), "test.c"), false, false);
+            await lexer.PostAllTextAsync(new StringReader(program));
+            lexer.Complete();
+            var tokens = (await lexer.ReceiveAllAsync().AsList());
             Assert.Equal(new[] { 
                     Int, Identifier, LeftParen, RightParen, LeftBrace,
                     Identifier, LeftParen, StringLiteral, RightParen, Semicolon,

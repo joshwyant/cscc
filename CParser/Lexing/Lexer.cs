@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using static CParser.Lexing.Terminal;
 using static CParser.Lexing.LexerState;
 using static CParser.Translation.SymbolType;
+using System.Threading.Tasks.Dataflow;
 
 namespace CParser.Lexing
 {
@@ -73,6 +74,16 @@ namespace CParser.Lexing
             OutputTrivia = outputTrivia;
             Filename = tu.CurrentFilename;
             OutputStream = new AsyncStreamWrapper<Token>(Lex());
+        }
+
+        public static AsyncStreamFunc<char, Token> Streaming(TranslationUnit translationUnit, bool preprocessorTokens, bool outputTrivia)
+        {
+            return charStream => new Lexer(translationUnit, charStream, preprocessorTokens, outputTrivia);
+        }
+
+        public static IPropagatorBlock<char, Token> AsBlock(TranslationUnit translationUnit, bool preprocessorTokens, bool outputTrivia)
+        {
+            return Streaming(translationUnit, preprocessorTokens, outputTrivia).AsBlock();
         }
 
         protected async IAsyncEnumerable<Token> Lex()

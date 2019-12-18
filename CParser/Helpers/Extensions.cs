@@ -12,7 +12,7 @@ namespace CParser.Helpers
     public static class Extensions
     {
         const int BUFFER_SIZE = 1024;
-        public async static Task<IEnumerable<T>> AsEnumerable<T>(this IAsyncEnumerable<T> enumerable)
+        public async static Task<List<T>> AsList<T>(this IAsyncEnumerable<T> enumerable)
         {
             var list = new List<T>();
             await foreach (var item in enumerable)
@@ -20,6 +20,10 @@ namespace CParser.Helpers
                 list.Add(item);
             }
             return list;
+        }
+        public async static Task<IEnumerable<T>> AsEnumerable<T>(this IAsyncEnumerable<T> enumerable)
+        {
+            return await enumerable.AsList();
         }
 
         // TODO: Wait until this becomes a part of the API
@@ -35,6 +39,11 @@ namespace CParser.Helpers
         public static IAsyncStream<TOutput> ToStream<TOutput>(this ISourceBlock<TOutput> source, TOutput sentinel = default, CancellationToken cancellationToken = default)
         {
             return new AsyncStreamWrapper<TOutput>(source.ReceiveAllAsync(cancellationToken), sentinel);
+        }
+
+        public static IAsyncStream<TOutput> ToStream<TOutput>(this IAsyncEnumerable<TOutput> source, TOutput sentinel = default, CancellationToken cancellationToken = default)
+        {
+            return new AsyncStreamWrapper<TOutput>(source, sentinel);
         }
 
         // TODO: Wait until this becomes a part of the API
@@ -64,19 +73,24 @@ namespace CParser.Helpers
 
         public async static Task PostAllTextAsync(this ITargetBlock<char> target, TextReader source, CancellationToken cancellationToken = default)
         {
-            var transform = new TransformManyBlock<IEnumerable<char>, char>(
-                input => input,
-                new ExecutionDataflowBlockOptions { CancellationToken = cancellationToken }
-            );
-            using (var link = transform.LinkTo(target))
+            // var transform = new TransformManyBlock<IEnumerable<char>, char>(
+            //     input => input,
+            //     new ExecutionDataflowBlockOptions { CancellationToken = cancellationToken }
+            // );
+            // using (var link = transform.LinkTo(target))
             {
                 var buffer = new char[BUFFER_SIZE];
                 int count;
                 while ((count = await source.ReadAsync(buffer, 0, BUFFER_SIZE)) > 0)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    transform.Post(buffer.Take(count));
-                    buffer = new char[BUFFER_SIZE]; // Send new pages of data as they become available
+                    // transform.Post(buffer.Take(count));
+                    // TODO: Get commented-out code to work rather than the loop below.
+                    for (var i = 0; i < count; i++)
+                    {
+                        target.Post(buffer[i]);
+                    }
+                    //buffer = new char[BUFFER_SIZE]; // Send new pages of data as they become available
                 }
             }
         }
@@ -103,14 +117,14 @@ namespace CParser.Helpers
                             options);
         }
 
-        public static IPropagatorBlock<T, T> ComposeAndChain<T>(this ISourceBlock<T> source, DataflowLinkOptions? options, params AsyncStreamFunc<T, T>[] functions)
+        public static IPropagatorBlock<TInput, TOutput> ComposeAndChain<TInput, TOutput>(this IPropagatorBlock<TInput, TOutput> source, DataflowLinkOptions? options, params AsyncStreamFunc<TOutput, TOutput>[] functions)
         {
             return functions.Aggregate(
-                                (IPropagatorBlock<T, T>)new BufferBlock<T>(), 
+                                source, 
                                 (block, f) => block.StreamAndChain(f, options));
         }
 
-        public static IPropagatorBlock<T, T> ComposeAndChain<T>(this ISourceBlock<T> source, params AsyncStreamFunc<T, T>[] functions)
+        public static IPropagatorBlock<TInput, TOutput> ComposeAndChain<TInput, TOutput>(this IPropagatorBlock<TInput, TOutput> source, params AsyncStreamFunc<TOutput, TOutput>[] functions)
         {
             return source.ComposeAndChain(null, functions);
         }

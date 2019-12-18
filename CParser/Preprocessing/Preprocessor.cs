@@ -11,10 +11,11 @@ using System.Threading.Tasks;
 using static CParser.Lexing.Terminal;
 using System.Collections.Concurrent;
 using System.Threading.Tasks.Dataflow;
+using static CParser.Helpers.Functions;
 
 namespace CParser.Preprocessing
 {
-    class Preprocessor : IAsyncStream<Token>
+    public class Preprocessor : IAsyncStream<Token>
     {
         private const int TAB_WIDTH = 8;
         public TranslationUnit TranslationUnit { get; }
@@ -36,13 +37,6 @@ namespace CParser.Preprocessing
             OutputStream = preprocess
                 ? Preprocess()
                 : TokenizeOnly();
-        }
-
-        protected IPropagatorBlock<T, T> Compose<T>(params AsyncStreamFunc<T, T>[] functions)
-        {
-            return functions.Aggregate(
-                    (IPropagatorBlock<T, T>)new BufferBlock<T>(), 
-                    (block, func) => block.StreamAndChain(func));
         }
 
         protected async Task ProcessPipeline(TextReader reader, IPropagatorBlock<char, Token> pipeline)
@@ -132,48 +126,56 @@ namespace CParser.Preprocessing
                         num_question_marks++;
                         break;
                     default:
-                        while (num_question_marks > 2)
+                        if (num_question_marks >= 2)
                         {
-                            yield return '?';
+                            while (num_question_marks > 2)
+                            {
+                                yield return '?';
+                                num_question_marks--;
+                            }
+                            switch (c)
+                            {
+                                case '=':
+                                    yield return '#';
+                                    break;
+                                case '/':
+                                    yield return '\\';
+                                    break;
+                                case '\'':
+                                    yield return '^';
+                                    break;
+                                case '(':
+                                    yield return '[';
+                                    break;
+                                case ')':
+                                    yield return ']';
+                                    break;
+                                case '!':
+                                    yield return '|';
+                                    break;
+                                case '<':
+                                    yield return '{';
+                                    break;
+                                case '>':
+                                    yield return '}';
+                                    break;
+                                case '-':
+                                    yield return '~';
+                                    break;
+                                default:
+                                    while (num_question_marks > 0)
+                                    {
+                                        yield return '?';
+                                    }
+                                    yield return c;
+                                    break;
+                            }
+                            num_question_marks = 0;
                         }
-                        switch (c)
+                        else
                         {
-                            case '=':
-                                yield return '#';
-                                break;
-                            case '/':
-                                yield return '\\';
-                                break;
-                            case '\'':
-                                yield return '^';
-                                break;
-                            case '(':
-                                yield return '[';
-                                break;
-                            case ')':
-                                yield return ']';
-                                break;
-                            case '!':
-                                yield return '|';
-                                break;
-                            case '<':
-                                yield return '{';
-                                break;
-                            case '>':
-                                yield return '}';
-                                break;
-                            case '-':
-                                yield return '~';
-                                break;
-                            default:
-                                while (num_question_marks > 0)
-                                {
-                                    yield return '?';
-                                }
-                                yield return c;
-                                break;
+                            yield return c;
                         }
-                        num_question_marks = 0;
                         break;
                 }
             }
