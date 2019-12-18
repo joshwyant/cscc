@@ -287,10 +287,10 @@ namespace CParser.Preprocessing
                                             // Storing locally here because of the closure in delegate
                                             var localBuffer = tokenBuffer;
                                             var pipeline = IncludePipeline();
+                                            pipeline.StreamAndChain(FilterEof).Chain(localBuffer);
                                             // The task doesn't need to be awaited.
                                             var task = Task.Run(
-                                                () => ProcessPipeline(filename, pipeline))
-                                                .ContinueWith(delegate { localBuffer.Complete(); });
+                                                () => ProcessPipeline(filename, pipeline));
                                         }
                                     }
                                 }
@@ -448,6 +448,17 @@ namespace CParser.Preprocessing
                 if (token.Kind == Newline)
                 {
                     yield break;
+                }
+            }
+        }
+
+        protected async IAsyncEnumerable<Token> FilterEof(IAsyncStream<Token> input)
+        {
+            await foreach (var token in input)
+            {
+                if (token.Kind != Terminal.Eof)
+                {
+                    yield return token;
                 }
             }
         }
