@@ -253,10 +253,11 @@ namespace CParser.Preprocessing
                 yield return tokenBuffer;
                 if (line.Peek().Kind == Pound)
                 {
-                    line.Read();
+                    var poundToken = line.Read();
                     if (line.Peek().Kind == Identifier)
                     {
-                        switch ((line.Read() as ValueToken<string>)!.Value.ToLower())
+                        ValueToken<string> directiveToken;
+                        switch ((directiveToken = (ValueToken<string>)line.Read()).Value.ToLower())
                         {
                             case "include":
                                 try
@@ -300,12 +301,26 @@ namespace CParser.Preprocessing
                                 }
                                 break;
                             default:
+                                // Pass directive on to the rest of the pipeline
+                                // (this method only handles the #include directive)
+                                tokenBuffer.Post(poundToken);
+                                tokenBuffer.Post(directiveToken);
+                                foreach (var token in line)
+                                {
+                                    tokenBuffer.Post(token);
+                                }
                                 tokenBuffer.Complete();
                                 break;
                         }
                     }
                     else
                     {
+                        // Pass line on to the rest of the pipeline
+                        tokenBuffer.Post(poundToken);
+                        foreach (var token in line)
+                        {
+                            tokenBuffer.Post(token);
+                        }
                         tokenBuffer.Complete();
                     }
                 }
@@ -401,7 +416,17 @@ namespace CParser.Preprocessing
                 {
                     foreach (var token in line)
                     {
-                        yield return token;
+                        if (token.Kind == Identifier)
+                        {
+                            foreach (var t in MaybeSubstitute((ValueToken<string>)token))
+                            {
+                                yield return t;
+                            }
+                        }
+                        else
+                        {
+                            yield return token;
+                        }
                     }
                 }
             }
@@ -463,11 +488,11 @@ namespace CParser.Preprocessing
             }
         }
 
-        async IAsyncEnumerable<Token> MaybeSubstitute(ValueToken<string> t)
+        IEnumerable<Token> MaybeSubstitute(ValueToken<string> t)
         {
             if (TranslationUnit.Defines.ContainsKey(t.Value))
             {
-                await foreach (var define_token in Substitute(t))
+                foreach (var define_token in Substitute(t))
                 {
                     yield return define_token;
                 }
@@ -478,7 +503,7 @@ namespace CParser.Preprocessing
             }
         }
 
-        async IAsyncEnumerable<Token> Substitute(ValueToken<string> t)
+        IEnumerable<Token> Substitute(ValueToken<string> t)
         {
             var s = TranslationUnit.Defines[t.Value];
             if (MacroStack.Contains(s.Name))
@@ -498,7 +523,7 @@ namespace CParser.Preprocessing
                             switch (define_token)
                             {
                                 case ValueToken<string> string_token when string_token.Kind == Identifier:
-                                    await foreach (var substitution_token in MaybeSubstitute(string_token))
+                                    foreach (var substitution_token in MaybeSubstitute(string_token))
                                     {
                                         yield return substitution_token.Copy(
                                             TranslationUnit.CurrentLine,

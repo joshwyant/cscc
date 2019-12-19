@@ -108,5 +108,60 @@ namespace tests
                     "end-of-file"
                 }, tokens.Select(t => t.ToString()));
         }
+
+        [Fact]
+        public async void TestEmptyDefine()
+        {
+            var program = 
+                @"#define t
+                t u";
+            var preprocessor = CreateTestPreprocessor(program, true);
+            var tokens = (await preprocessor.AsList());
+            Assert.Equal(new[] { 
+                    Identifier,
+                    Eof
+                }, tokens.Terminals());
+            Assert.Equal(new[] { 
+                    "u",
+                    "end-of-file"
+                }, tokens.Select(t => t.ToString()));
+        }
+
+        [Fact]
+        public async void TestDefineTokens()
+        {
+            var program = 
+                @"#define t x y z 1 'a'
+                t u";
+            var preprocessor = CreateTestPreprocessor(program, true);
+            var tokens = (await preprocessor.AsList());
+            Assert.Equal(new[] { 
+                    Identifier, Identifier, Identifier, IntegerConstant, CharLiteral, Identifier,
+                    Eof
+                }, tokens.Terminals());
+            Assert.Equal(new[] { 
+                    "x", "y", "z", "1", "a", "u",
+                    "end-of-file"
+                }, tokens.Select(t => t.ToString()));
+        }
+
+        [Fact]
+        public async void TestContinuingDefineTokens()
+        {
+            var program = 
+                @"#define t a \
+                b
+                t u t";
+            var preprocessor = CreateTestPreprocessor(program, true);
+            var tokens = (await preprocessor.AsList());
+            Assert.Equal(new[] { 
+                    Identifier, Identifier, Identifier, Identifier, Identifier,
+                    Eof
+                }, tokens.Terminals());
+            Assert.Equal(new[] { 
+                    "a", "b", "u", "a", "b",
+                    "end-of-file"
+                }, tokens.Select(t => t.ToString()));
+        }
     }
 }

@@ -134,7 +134,7 @@ namespace CParser.Lexing
                 }
                 else if (char.IsDigit(c))
                 {
-                    var integer = 0UL;
+                    var integer = 0UL + c - '0';
                     var fraction = 0M;
                     var real = 0M;
                     var hexOrOctal = false;
@@ -391,7 +391,7 @@ namespace CParser.Lexing
                             {
                                 await InputStream.Read();
                             }
-                            yield return new ValueToken<string>(Terminal.StringLiteral, line, column, filename, sb.ToString());
+                            yield return new ValueToken<string>(delimeter == '\"' ? StringLiteral : CharLiteral, line, column, filename, sb.ToString());
                             break;
                         }
                         case '~':
