@@ -287,7 +287,7 @@ namespace CParser.Preprocessing
                                             // Storing locally here because of the closure in delegate
                                             var localBuffer = tokenBuffer;
                                             var pipeline = IncludePipeline();
-                                            pipeline.StreamAndChain(FilterEof).Chain(localBuffer);
+                                            pipeline.StreamAndChain(FilterEof!).Chain(localBuffer);
                                             // The task doesn't need to be awaited.
                                             var task = Task.Run(
                                                 () => ProcessPipeline(filename, pipeline));
