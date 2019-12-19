@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace CParser.Parsing
 {
-    class Parser : IAsyncEnumerable<AstNode>
+    public class Parser : IAsyncEnumerable<AstNode>
     {
         public TranslationUnit TranslationUnit { get; }
         protected IAsyncStream<Token> InputStream { get; }
