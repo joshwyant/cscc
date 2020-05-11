@@ -57,7 +57,7 @@ namespace CParser.Helpers
         {
             if (Buffer.Any())
             {
-                return false;
+                return Buffer.Peek()!.Equals(Sentinel);
             }
             if (await SourceEnumerator.MoveNextAsync())
             {

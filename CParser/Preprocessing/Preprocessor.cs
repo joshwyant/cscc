@@ -69,8 +69,8 @@ namespace CParser.Preprocessing
         {
             return BasicPipeline(true) // preprocess
                     .StreamAndChain(stream =>
-                                        RemoveTrivia(stream!, true)) // keep newlines
-                    .StreamAndChain(CollectLines!)
+                                        RemoveTrivia(stream!, true), default, Sentinel) // keep newlines
+                    .StreamAndChain(CollectLines!, default, Sentinel)
                     .StreamAndChain(IncludeFiles!)
                     .StreamAndChain(AssembleBuffers!);
         }
@@ -78,9 +78,9 @@ namespace CParser.Preprocessing
         protected IPropagatorBlock<char, Token> FullPipeline()
         {
             return IncludePipeline()
-                    .StreamAndChain(CollectLines!)
+                    .StreamAndChain(CollectLines!, default, Sentinel)
                     .StreamAndChain(DoPreprocess!)
-                    .StreamAndChain(stream => RemoveTrivia(stream!)); // remove all the newlines
+                    .StreamAndChain(stream => RemoveTrivia(stream!), default, Sentinel); // remove all the newlines
         }
 
         protected async IAsyncEnumerable<char> CountLines(IAsyncStream<char> input)
@@ -352,7 +352,7 @@ namespace CParser.Preprocessing
 
             var pipelineTask = ProcessPipeline(Reader, pipeline);
 
-            return pipeline.ToStream()!;
+            return pipeline.ToStream(Sentinel)!;
         }
 
         protected IAsyncStream<Token> TokenizeOnly()
@@ -361,7 +361,7 @@ namespace CParser.Preprocessing
 
             var pipelineTask = ProcessPipeline(Reader, pipeline);
 
-            return pipeline.ToStream()!;
+            return pipeline.ToStream(Sentinel)!;
         }
 
         protected async IAsyncEnumerable<Token> DoPreprocess(IAsyncStream<IStream<Token>> lines)
