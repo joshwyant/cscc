@@ -73,7 +73,7 @@ namespace CParser.Lexing
             PreprocessorTokens = preprocessorTokens;
             OutputTrivia = outputTrivia;
             Filename = tu.CurrentFilename;
-            OutputStream = new AsyncStreamWrapper<Token>(Lex());
+            OutputStream = new AsyncStreamWrapper<Token>(Lex(), Token.Eof);
         }
 
         public static AsyncStreamFunc<char, Token> Streaming(TranslationUnit translationUnit, bool preprocessorTokens, bool outputTrivia)

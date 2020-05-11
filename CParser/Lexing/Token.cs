@@ -36,5 +36,7 @@ namespace CParser.Lexing
         {
             return TerminalMap.Name(Kind);
         }
+
+        public static Token Eof = new Token(Terminal.Eof, 0, 0, "");
     }
 }

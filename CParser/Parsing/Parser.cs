@@ -172,36 +172,52 @@ namespace CParser.Parsing
 
         protected async Task<DeclarationAstNode?> externalDeclaration()
         {
-            return await functionDefinition() as DeclarationAstNode
-                ?? await declaration() as DeclarationAstNode;
-        }
-
-        protected async Task<FunctionDefinitionAstNode?> functionDefinition()
-        {
             var (line, column) = await Metrics();
             var specifiers = await declarationSpecifiers();
-            var d = await declarator();
-            if (d == default)
+            var d = await initDeclarator(); // Declarator in the grammar, but we need to be able to tell it apart.
+            if (specifiers != default && (d != default && d is InitDeclaratorAstNode || await PeekCheck(Comma) || await PeekCheck(Semicolon)))
             {
-                return default;
+                return await partiallyParsedDeclaration((line, column), specifiers, d);
             }
+            if (d != default && !(d is InitDeclaratorAstNode))
+            {
+                return await functionDefinition((line, column), specifiers, d);
+            }
+            return default;
+        }
+
+        protected async Task<FunctionDefinitionAstNode?> functionDefinition((int line, int column) metrics, List<SpecifierAstNode>? specifiers, DeclaratorAstNode d)
+        {
+            // At this point, we've partially parsed optional specifiers and a declarator.
             var dl = await declarationList();
             TranslationUnit.Labels = new SymbolTable(TranslationUnit.Labels);
             var cs = await compoundStatement();
             TranslationUnit.Labels = TranslationUnit.Labels.Parent!;
-            return new FunctionDefinitionAstNode(specifiers, d, dl, await required(cs, "method body"), line, column);
+            return new FunctionDefinitionAstNode(specifiers, d, dl, await required(cs, "method body"), metrics.line, metrics.column);
         }
 
         protected async Task<VariableDeclarationAstNode?> declaration()
         {
             var (line, column) = await Metrics();
             var specifiers = await declarationSpecifiers();
-            var list = await initDeclaratorList();
-            if (specifiers == default && list == default)
+            if (specifiers == null)
             {
                 return default;
             }
-            var d = new VariableDeclarationAstNode(specifiers!, list, line, column);
+            var d = await initDeclarator();
+            return await partiallyParsedDeclaration((line, column), specifiers, d);
+        }
+
+        protected async Task<VariableDeclarationAstNode?> partiallyParsedDeclaration((int line, int column) metrics, List<SpecifierAstNode> specifiers, DeclaratorAstNode? decl)
+        {
+            // At this point, we've partially parsed specifiers and an optional declarator.
+            var list = await partiallyParsedInitDeclaratorList(decl);
+            if (list == default)
+            {
+                return default;
+            }
+            var d = new VariableDeclarationAstNode(specifiers, list, metrics.line, metrics.column);
+            await Check(Semicolon);
             if (specifiers
                 .OfType<StorageClassSpecifierAstNode>()
                 .Cast<StorageClassSpecifierAstNode>()
@@ -271,7 +287,7 @@ namespace CParser.Parsing
             var (line, column) = await Metrics();
             switch ((await InputStream.Peek()).Kind)
             {
-                case Auto:
+                case Terminal.Void:
                 case Terminal.Char:
                 case Terminal.Short:
                 case Int:
@@ -369,9 +385,13 @@ namespace CParser.Parsing
 
         protected async Task<List<DeclaratorAstNode>?> initDeclaratorList()
         {
+            return await partiallyParsedInitDeclaratorList(await initDeclarator());
+        }
+
+        protected async Task<List<DeclaratorAstNode>?> partiallyParsedInitDeclaratorList(DeclaratorAstNode? decl)
+        {
             var list = new List<DeclaratorAstNode>();
-            DeclaratorAstNode? decl;
-            while (default != (decl = await initDeclarator()))
+            for (; decl != default; decl = await initDeclarator())
             {
                 list.Add(decl);
                 if (!await Check(Comma))
@@ -541,7 +561,7 @@ namespace CParser.Parsing
             switch (t.Kind)
             {
                 case Identifier:
-                    var ident = t as ValueToken<string>;
+                    var ident = await InputStream.Read() as ValueToken<string>;
                     dd = new IdentifierDeclaratorAstNode(ident!.Value, line, column);
                     break;
                 case LeftParen:
@@ -784,8 +804,8 @@ namespace CParser.Parsing
                 ?? await compoundStatement()
                 ?? await selectionStatement()
                 ?? await iterationStatement()
-                ?? await jumpStatement()
-                ?? await declarationStatement(); // I added this
+                ?? await jumpStatement();
+                // ?? await declarationStatement(); // I added this
         }
 
         protected async Task<StatementAstNode?> labeledStatement()
@@ -795,6 +815,12 @@ namespace CParser.Parsing
             switch (await InputStream.Peek())
             {
                 case ValueToken<string> ident when ident.Kind == Identifier:
+                    await InputStream.Read();
+                    if (!await PeekCheck(Colon))
+                    {
+                        InputStream.PutBack(ident);
+                        return await expressionStatement();
+                    }
                     label = new IdentifierLabelAstNode(ident.Value, line, column);
                     await AddSymbol(
                         TranslationUnit.Labels, 
@@ -803,9 +829,11 @@ namespace CParser.Parsing
                         label);
                     break;
                 case Token t when t.Kind == Case:
+                    await InputStream.Read();
                     label = new CaseLabelAstNode(await constantExpression(), line, column);
                     break;
                 case Token t when t.Kind == Default:
+                    await InputStream.Read();
                     label = new DefaultLabelAstNode(line, column);
                     break;
                 default:
@@ -821,7 +849,7 @@ namespace CParser.Parsing
             var d = await declaration();
             if (d == default)
             {
-                await Error($"declaration expected");
+                //await Error($"declaration expected");
                 return default!;
             }
             else 
@@ -830,10 +858,16 @@ namespace CParser.Parsing
             }
         }
 
-        protected async Task<StatementAstNode> expressionStatement()
+        protected async Task<StatementAstNode?> expressionStatement()
         {
             var (line, column) = await Metrics();
-            return new ExpressionStatementAstNode(await expression(), line, column);
+            var e = await expression();
+            if (e != null)
+            {
+                await Expect(Semicolon);
+                return new ExpressionStatementAstNode(e, line, column);
+            }
+            return default;
         }
 
         protected async Task<CompoundStatementAstNode?> compoundStatement()
@@ -1164,7 +1198,10 @@ namespace CParser.Parsing
             {
                 return e;
             }
-            await Expect(LeftParen);
+            if (!await Check(LeftParen))
+            {
+                return default;
+            }
             var t = await typeName();
             await Expect(RightParen);
             e = await requiredExpression(castExpression);
@@ -1210,19 +1247,26 @@ namespace CParser.Parsing
                 switch (t)
                 {
                     case LeftBracket:
+                        await InputStream.Read();
                         e = new PostfixIndexerExpressionAstNode(await requiredExpression(e), await requiredExpression(expression), line, column);
+                        await Expect(RightBracket);
                         break;
                     case LeftParen:
+                        await InputStream.Read();
                         e = new PostfixCallExpressionAstNode(await requiredExpression(e), await argumentExpressionList(), line, column);
+                        await Expect(RightParen);
                         break;
                     case Dot:
+                        await InputStream.Read();
                         e = new PostfixMemberAccessExpressionAstNode(await requiredExpression(e), (await CheckAndGet(Identifier) as ValueToken<string>)?.Value!, line, column);
                         break;
                     case Arrow:
+                        await InputStream.Read();
                         e = new PostfixPointerAccessExpressionAstNode(await requiredExpression(e), (await CheckAndGet(Identifier) as ValueToken<string>)?.Value!, line, column);
                         break;
                     case Increment:
                     case Decrement:
+                        await InputStream.Read();
                         return new PostfixExpressionAstNode(await requiredExpression(e), t, line, column);
                     default:
                         return e;
