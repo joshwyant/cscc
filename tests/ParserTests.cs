@@ -20,7 +20,7 @@ namespace tests
         [Fact]
         public async void TestBasicC89Program()
         {
-            var program = @"#include ""stdio.h""
+            var program = @"#include <stdio.h>
                             main() {
                                 printf(""Hello, world!\n"");
                             }";

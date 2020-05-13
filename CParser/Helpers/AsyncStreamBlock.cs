@@ -23,22 +23,13 @@ namespace CParser.Helpers
             CancellationToken = cancellation;
             Sentinel = sentinel;
 
-            Task.Run(DoWork);
-                
-            Completion = SourceBlock.Completion;
+            Completion = SourceBlock
+                .PostAllAsync(
+                    Function(TargetBlock.ToStream(Sentinel)),
+                    CancellationToken).ContinueWith(_ => SourceBlock.Complete());
         }
 
         public Task Completion { get; }
-
-        protected async Task DoWork()
-        {
-            await SourceBlock
-                .PostAllAsync(
-                    Function(TargetBlock.ToStream(Sentinel)), 
-                    CancellationToken);
-
-            SourceBlock.Complete();
-        }
 
         public void Complete()
         {

@@ -36,6 +36,24 @@ namespace CParser.Helpers
             }
         }
 
+        public static AsyncStreamFunc<TInput, TOutput> AsFunction<TInput, TOutput>(this IPropagatorBlock<TInput, TOutput> source, TOutput sentinel = default)
+        {
+            var wrapper = new AsyncStreamWrapper<TOutput>(source.ReceiveAllAsync(), sentinel);
+            return input => {
+                var dummyTask = source.PostAllAsync(input)
+                    .ContinueWith(_ => source.Complete());
+                return wrapper;
+            };
+        }
+
+        public static IAsyncStream<char> ToStream(this TextReader source, CancellationToken cancellationToken = default)
+        {
+            var buffer = new BufferBlock<char>();
+            var dummyTask = buffer.PostAllTextAsync(source, cancellationToken)
+                    .ContinueWith(_ => buffer.Complete());
+            return new AsyncStreamWrapper<char>(buffer.ReceiveAllAsync(cancellationToken));
+        }
+
         public static IAsyncStream<TOutput> ToStream<TOutput>(this ISourceBlock<TOutput> source, TOutput sentinel = default, CancellationToken cancellationToken = default)
         {
             return new AsyncStreamWrapper<TOutput>(source.ReceiveAllAsync(cancellationToken), sentinel);
@@ -85,7 +103,7 @@ namespace CParser.Helpers
             }
         }
 
-        public static IPropagatorBlock<TInput, TOutput> AsBlock<TInput, TOutput>(this AsyncStreamFunc<TInput, TOutput> func, TInput sentinel = default, CancellationToken cancellationToken = default)
+        public static IPropagatorBlock<TInput, TOutput> Buffered<TInput, TOutput>(this AsyncStreamFunc<TInput, TOutput> func, TInput sentinel = default, CancellationToken cancellationToken = default)
         {
             return new AsyncStreamBlock<TInput, TOutput>(func, sentinel, cancellationToken);
         }
@@ -99,11 +117,28 @@ namespace CParser.Helpers
             return DataflowBlock.Encapsulate<TInput, TOutput>(source, target);
         }
 
+        public static IAsyncStream<TOutput> Chain<TInput, TOutput>(this IAsyncStream<TInput> source, AsyncStreamFunc<TInput, TOutput> target, TOutput sentinel = default, CancellationToken cancellationToken = default)
+        {
+            return target(source).ToStream(sentinel, cancellationToken);
+        }
+
+        public static AsyncStreamFunc<TInput, TOutput> Chain<TInput, TLink, TOutput>(this AsyncStreamFunc<TInput, TLink> func1, AsyncStreamFunc<TLink, TOutput> func2, TLink sentinel = default)
+        {
+            return input => func2(new AsyncStreamWrapper<TLink>(func1(input), sentinel));
+        }
+
+        public static IAsyncStream<T> ComposeAndChain<T>(this IAsyncStream<T> source, params AsyncStreamFunc<T, T>[] functions)
+        {
+            return functions.Aggregate(
+                                source, 
+                                (stream, f) => stream.Chain(f));
+        }
+
         // Chains a block to a new async stream block based on the given function, and propagates completion by default.
-        public static IPropagatorBlock<TInput, TOutput> StreamAndChain<TInput, TLink, TOutput>(this IPropagatorBlock<TInput, TLink> source, AsyncStreamFunc<TLink, TOutput> func, DataflowLinkOptions? options = null, TLink sentinel = default, CancellationToken cancellationToken = default)
+        public static IPropagatorBlock<TInput, TOutput> BufferAndChain<TInput, TLink, TOutput>(this IPropagatorBlock<TInput, TLink> source, AsyncStreamFunc<TLink, TOutput> func, DataflowLinkOptions? options = null, TLink sentinel = default, CancellationToken cancellationToken = default)
         {
             return source.Chain(
-                            func.AsBlock(sentinel, cancellationToken),
+                            func.Buffered(sentinel, cancellationToken),
                             options);
         }
 
@@ -111,7 +146,7 @@ namespace CParser.Helpers
         {
             return functions.Aggregate(
                                 source, 
-                                (block, f) => block.StreamAndChain(f, options));
+                                (block, f) => block.BufferAndChain(f, options));
         }
 
         public static IPropagatorBlock<TInput, TOutput> ComposeAndChain<TInput, TOutput>(this IPropagatorBlock<TInput, TOutput> source, params AsyncStreamFunc<TOutput, TOutput>[] functions)
