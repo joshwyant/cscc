@@ -38,12 +38,14 @@ namespace tests
         {
             var block = new BufferBlock<int>();
 
-            await block.PostAllAsync(generator());
-            block.Complete();
+            var postingTask = block.PostAllAsync(generator())
+                .ContinueWith(_ => block.Complete());
 
             Assert.Equal(
                 new[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 
                 await block.ReceiveAllAsync().AsList());
+
+            await postingTask;
         }
 
         [Fact]
@@ -51,33 +53,37 @@ namespace tests
         {
             var block = new BufferBlock<int>();
 
-            await block.PostAllAsync(generator());
-            block.Complete();
+            var postingTask = block.PostAllAsync(generator())
+                .ContinueWith(_ => block.Complete());
 
             Assert.Equal(
                 new[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 
                 await block.ReceiveAllAsync().AsList());
+
+            await postingTask;
         }
 
         [Fact]
         public async Task TestAsyncStreamBlock()
         {
             AsyncStreamFunc<int, string> func = asyncStreamFuncLessThan6;
-            var block = func.AsBlock(0xFF);
+            var block = func.Buffered(0xFF);
 
-            await block.PostAllAsync(generator());
-            block.Complete();
+            var postingTask = block.PostAllAsync(generator())
+                .ContinueWith(_ => block.Complete());
 
             Assert.Equal(
                 new[] {"0", "1", "2", "3", "4", "5"}, 
                 await block.ReceiveAllAsync().AsList());
+
+            await postingTask;
         }
 
         [Fact]
         public async Task TestComposeAndStream()
         {
             AsyncStreamFunc<int, string> func = asyncStreamFuncLessThan6;
-            var pipeline = func.AsBlock(0xFF).ComposeAndChain(asyncStreamFuncBangs, asyncStreamFuncQueries);
+            var pipeline = func.Buffered(0xFF).ComposeAndChain(asyncStreamFuncBangs, asyncStreamFuncQueries);
 
             await pipeline.PostAllAsync(generator());
             pipeline.Complete();
@@ -85,6 +91,19 @@ namespace tests
             Assert.Equal(
                 new[] {"0!?", "1!?", "2!?", "3!?", "4!?", "5!?"},
                 await pipeline.ReceiveAllAsync().AsList());
+        }
+
+        [Fact]
+        public async Task TestChainFunctions()
+        {
+            AsyncStreamFunc<int, string> func = asyncStreamFuncLessThan6;
+            var pipeline = func.Chain(asyncStreamFuncBangs).Chain(asyncStreamFuncQueries);
+
+            var result = pipeline(new AsyncStreamWrapper<int>(generator(), 0xFF));
+
+            Assert.Equal(
+                new[] {"0!?", "1!?", "2!?", "3!?", "4!?", "5!?"},
+                await result.AsList());
         }
 
         protected async IAsyncEnumerable<int> generator()

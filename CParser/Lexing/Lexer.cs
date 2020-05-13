@@ -83,7 +83,7 @@ namespace CParser.Lexing
 
         public static IPropagatorBlock<char, Token> AsBlock(TranslationUnit translationUnit, bool preprocessorTokens, bool outputTrivia)
         {
-            return Streaming(translationUnit, preprocessorTokens, outputTrivia).AsBlock();
+            return Streaming(translationUnit, preprocessorTokens, outputTrivia).Buffered();
         }
 
         protected async IAsyncEnumerable<Token> Lex()
@@ -99,7 +99,7 @@ namespace CParser.Lexing
                     var sb = new StringBuilder();
                     while (!await InputStream.Eof() && ((c = await InputStream.Peek()) != '>'))
                     {
-                        sb.Append(c);
+                        sb.Append(await InputStream.Read());
                     }
                     TranslationUnit.LexerState = LexerState.LexerReady;
                     yield return new ValueToken<string>(Terminal.Filename, line, column, filename, sb.ToString());

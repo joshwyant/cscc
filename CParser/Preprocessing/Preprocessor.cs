@@ -39,13 +39,12 @@ namespace CParser.Preprocessing
                 : TokenizeOnly();
         }
 
-        protected async Task ProcessPipeline(TextReader reader, IPropagatorBlock<char, Token> pipeline)
+        protected IAsyncStream<Token> ProcessPipeline(TextReader reader, AsyncStreamFunc<char, Token> pipeline)
         {
-            await pipeline.PostAllTextAsync(reader);
-            pipeline.Complete();
+            return pipeline(reader.ToStream()).ToStream(Sentinel)!;
         }
 
-        protected Task ProcessPipeline(string filename, IPropagatorBlock<char, Token> pipeline)
+        protected IAsyncStream<Token> ProcessPipeline(string filename, AsyncStreamFunc<char, Token> pipeline)
         {
             return ProcessPipeline(
                     TranslationUnit
@@ -54,33 +53,31 @@ namespace CParser.Preprocessing
                     pipeline);
         }
 
-        protected IPropagatorBlock<char, Token> BasicPipeline(bool preprocessing)
+        protected AsyncStreamFunc<char, Token> BasicPipeline(bool preprocessing)
         {
             return Compose<char>(CountLines, 
                                  ReplaceTrigraphs, 
                                  SpliceLines)
-                   .StreamAndChain(charStream => 
+                   .Chain(charStream => 
                                        new Lexer(TranslationUnit, 
                                                  charStream,
                                                  preprocessing, preprocessing));
         }
 
-        protected IPropagatorBlock<char, Token> IncludePipeline()
+        protected AsyncStreamFunc<char, Token> IncludePipeline()
         {
             return BasicPipeline(true) // preprocess
-                    .StreamAndChain(stream =>
-                                        RemoveTrivia(stream!, true), default, Sentinel) // keep newlines
-                    .StreamAndChain(CollectLines!, default, Sentinel)
-                    .StreamAndChain(IncludeFiles!)
-                    .StreamAndChain(AssembleBuffers!);
+                    .Chain(stream =>
+                                        RemoveTrivia(stream!, true), Sentinel)! // keep newlines
+                    .Chain(IncludeFiles!)!
+                    .Chain(AssembleBuffers!);
         }
 
-        protected IPropagatorBlock<char, Token> FullPipeline()
+        protected AsyncStreamFunc<char, Token> FullPipeline()
         {
-            return IncludePipeline()
-                    .StreamAndChain(CollectLines!, default, Sentinel)
-                    .StreamAndChain(DoPreprocess!)
-                    .StreamAndChain(stream => RemoveTrivia(stream!), default, Sentinel); // remove all the newlines
+            return IncludePipeline()!
+                    .Chain(DoPreprocess!)
+                    .Chain(stream => RemoveTrivia(stream!), Sentinel); // remove all the newlines
         }
 
         protected async IAsyncEnumerable<char> CountLines(IAsyncStream<char> input)
@@ -243,95 +240,133 @@ namespace CParser.Preprocessing
             }
         }
 
-        protected async IAsyncEnumerable<BufferBlock<Token>> IncludeFiles(IAsyncStream<IStream<Token>> lines)
+        protected async Task ProcessIncludeFileLine(IAsyncStream<Token> input, BufferBlock<Token> tokenBuffer)
         {
             Terminal? t = default;
-            await foreach (var line in lines)
+            if ((await input.Peek()).Kind == Pound)
             {
-                // Preprocessor posts processed tokens onto this buffer block.
-                var tokenBuffer = new BufferBlock<Token>();
-                yield return tokenBuffer;
-                if (line.Peek().Kind == Pound)
+                var poundToken = (await input.Read());
+                if ((await input.Peek()).Kind == Identifier)
                 {
-                    var poundToken = line.Read();
-                    if (line.Peek().Kind == Identifier)
+                    ValueToken<string> directiveToken;
+                    switch ((directiveToken = (ValueToken<string>)(await input.Read())).Value.ToLower())
                     {
-                        ValueToken<string> directiveToken;
-                        switch ((directiveToken = (ValueToken<string>)line.Read()).Value.ToLower())
-                        {
-                            case "include":
-                                try
+                        case "include":
+                            if ((t = (await input.Peek()).Kind) == LessThan || t == StringLiteral)
+                            {
+                                string? filename = null;
+                                if (t == StringLiteral)
                                 {
-                                    if ((t = line.Peek().Kind) == LessThan || t == StringLiteral)
+                                    var token = await input.Read();
+                                    filename = ((ValueToken<string>)token).Value;
+                                    if (!await input.Eof())
                                     {
-                                        var token = line.Read();
-                                        string? filename = null;
-                                        if (t == StringLiteral)
+                                        if ((await input.Peek()).Kind != Newline)
                                         {
-                                            filename = ((ValueToken<string>)token).Value;
+                                            // TODO: Error
                                         }
                                         else
                                         {
-                                            TranslationUnit.LexerState = LexerState.LexingLibraryFilename;
-                                            if (line.Peek().Kind == Filename)
-                                            {
-                                                filename = ((ValueToken<string>)line.Read()).Value;
-                                            }
-                                            TranslationUnit.LexerState = LexerState.LexerReady;
-                                            if (line.Peek().Kind != GreaterThan)
-                                            {
-                                                // TODO: Error
-                                            }
+                                            tokenBuffer.Post(await input.Read());
                                         }
-                                        if (filename != null)
-                                        {
-                                            // Storing locally here because of the closure in delegate
-                                            var localBuffer = tokenBuffer;
-                                            var pipeline = IncludePipeline();
-                                            pipeline.StreamAndChain(FilterEof!).Chain(localBuffer);
-                                            // The task doesn't need to be awaited.
-                                            var task = Task.Run(
-                                                () => ProcessPipeline(filename, pipeline));
-                                        }
+                                        // TODO: Error
                                     }
                                 }
-                                finally
+                                else
                                 {
-                                    TranslationUnit.LexerState = LexerState.LexerReady;
+                                    try
+                                    {
+                                        var token = await input.Read();
+                                        TranslationUnit.LexerState = LexerState.LexingLibraryFilename;
+                                        if ((await input.Peek()).Kind == Filename)
+                                        {
+                                            filename = ((ValueToken<string>)await input.Read()).Value;
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        TranslationUnit.LexerState = LexerState.LexerReady;
+                                    }
+                                    if ((await input.Peek()).Kind != GreaterThan)
+                                    {
+                                        // TODO: Error
+                                    }
+                                    else
+                                    {
+                                        await input.Read();
+                                    }
+                                    if (!await input.Eof())
+                                    {
+                                        if ((await input.Peek()).Kind != Newline)
+                                        {
+                                            // TODO: Error
+                                        }
+                                        else
+                                        {
+                                            tokenBuffer.Post(await input.Read());
+                                        }
+                                        // TODO: Error
+                                    }
                                 }
-                                break;
-                            default:
-                                // Pass directive on to the rest of the pipeline
-                                // (this method only handles the #include directive)
-                                tokenBuffer.Post(poundToken);
-                                tokenBuffer.Post(directiveToken);
-                                foreach (var token in line)
+                                if (filename != null)
                                 {
-                                    tokenBuffer.Post(token);
+                                    var pipeline = IncludePipeline()!.Chain(FilterEof!);
+                                    var dummyTask = tokenBuffer.PostAllAsync(ProcessPipeline(filename, pipeline))
+                                        .ContinueWith(_ => tokenBuffer.Complete());
                                 }
-                                tokenBuffer.Complete();
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        // Pass line on to the rest of the pipeline
-                        tokenBuffer.Post(poundToken);
-                        foreach (var token in line)
+                            }
+                            break;
+                        default:
                         {
-                            tokenBuffer.Post(token);
+                            // Pass directive on to the rest of the pipeline
+                            // (this method only handles the #include directive)
+                            tokenBuffer.Post(poundToken);
+                            tokenBuffer.Post(directiveToken);
+                            while (!await input.Eof())
+                            {
+                                var token = await input.Read();
+                                tokenBuffer.Post(token);
+                                if (token.Kind == Newline) break;
+                            }
+                            tokenBuffer.Complete();
+                            break;
                         }
-                        tokenBuffer.Complete();
                     }
                 }
                 else
                 {
-                    foreach (var token in line)
+                    // Pass line on to the rest of the pipeline
+                    tokenBuffer.Post(poundToken);
+                    while (!await input.Eof())
                     {
+                        var token = await input.Read();
                         tokenBuffer.Post(token);
+                        if (token.Kind == Newline) break;
                     }
                     tokenBuffer.Complete();
                 }
+            }
+            else
+            {
+                while (!await input.Eof())
+                {
+                    var token = await input.Read();
+                    tokenBuffer.Post(token);
+                    if (token.Kind == Newline) break;
+                }
+                tokenBuffer.Complete();
+            }
+        }
+
+        protected async IAsyncEnumerable<BufferBlock<Token>> IncludeFiles(IAsyncStream<Token> input)
+        {
+            while (!await input.Eof())
+            {
+                // Preprocessor posts processed tokens onto this buffer block.
+                var tokenBuffer = new BufferBlock<Token>();
+                var task = ProcessIncludeFileLine(input, tokenBuffer);
+                yield return tokenBuffer;
+                await task;
             }
         }
 
@@ -348,51 +383,47 @@ namespace CParser.Preprocessing
 
         protected IAsyncStream<Token> Preprocess()
         {
-            var pipeline = FullPipeline();
-
-            var pipelineTask = ProcessPipeline(Reader, pipeline);
-
-            return pipeline.ToStream(Sentinel)!;
+            return ProcessPipeline(Reader, FullPipeline());
         }
 
         protected IAsyncStream<Token> TokenizeOnly()
         {
-            var pipeline = BasicPipeline(false);
-
-            var pipelineTask = ProcessPipeline(Reader, pipeline);
-
-            return pipeline.ToStream(Sentinel)!;
+            return ProcessPipeline(Reader, BasicPipeline(false));
         }
 
-        protected async IAsyncEnumerable<Token> DoPreprocess(IAsyncStream<IStream<Token>> lines)
+        protected async IAsyncEnumerable<Token> DoPreprocess(IAsyncStream<Token> input)
         {
-            await foreach (var line in lines)
+            while (!await input.Eof())
             {
-                if (line.Peek().Kind == Pound)
+                Token token;
+                if ((await input.Peek()).Kind == Pound)
                 {
-                    line.Read();
-                    if (line.Peek().Kind == Identifier)
+                    await input.Read();
+                    if ((await input.Peek()).Kind == Identifier)
                     {
-                        switch ((line.Read() as ValueToken<string>)!.Value.ToLower())
+                        switch ((await input.Read() as ValueToken<string>)!.Value.ToLower())
                         {
                             case "define":
-                                if (line.Peek().Kind == Identifier)
+                            {
+                                if ((await input.Peek()).Kind == Identifier)
                                 {
-                                    var ident = (ValueToken<string>)line.Read();
+                                    var ident = (ValueToken<string>)await input.Read();
                                     var list = new List<Token>();
-                                    foreach (var token in line)
+                                    while (!await input.Eof())
                                     {
-                                        list.Add(token);
+                                        list.Add(token = await input.Read());
+                                        if (token.Kind == Newline) break;
                                     }
                                     var define = new DefineSymbol(SymbolType.DefineSymbol,
                                         ident!.Value, list);
                                     TranslationUnit.Defines.Add(ident.Value, define);
                                 }
                                 break;
+                            }
                             case "undef":
-                                if (line.Peek().Kind == Identifier)
+                                if ((await input.Peek()).Kind == Identifier)
                                 {
-                                    var ident = (ValueToken<string>)line.Read();
+                                    var ident = (ValueToken<string>)await input.Read();
                                     TranslationUnit.Defines.Remove(ident.Value);
                                 }
                                 break;
@@ -412,36 +443,22 @@ namespace CParser.Preprocessing
                         }
                     }
                 }
-                else
+                while (!await input.Eof())
                 {
-                    foreach (var token in line)
+                    token = await input.Read();
+                    if (token.Kind == Identifier)
                     {
-                        if (token.Kind == Identifier)
+                        foreach (var t in MaybeSubstitute((ValueToken<string>)token))
                         {
-                            foreach (var t in MaybeSubstitute((ValueToken<string>)token))
-                            {
-                                yield return t;
-                            }
-                        }
-                        else
-                        {
-                            yield return token;
+                            yield return t;
                         }
                     }
+                    else
+                    {
+                        yield return token;
+                    }
+                    if (token.Kind == Newline) break;
                 }
-            }
-        }
-
-        protected async IAsyncEnumerable<IStream<Token>> CollectLines(IAsyncStream<Token> input)
-        {
-            while (!await input.Eof())
-            {
-                var list = new List<Token>();
-                await foreach (var token in ScanLine(input))
-                {
-                    list.Add(token);
-                }
-                yield return new StreamWrapper<Token>(list);
             }
         }
 
