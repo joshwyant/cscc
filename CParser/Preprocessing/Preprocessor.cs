@@ -310,8 +310,9 @@ namespace CParser.Preprocessing
                                 }
                                 if (filename != null)
                                 {
-                                    var pipeline = IncludePipeline()!.Chain(FilterEof!);
-                                    var dummyTask = tokenBuffer.PostAllAsync(ProcessPipeline(filename, pipeline))
+                                    var dummyTask = tokenBuffer.PostAllAsync(
+                                            ProcessPipeline(filename, IncludePipeline()!
+                                                .Chain(FilterEof!)))
                                         .ContinueWith(_ => tokenBuffer.Complete());
                                 }
                             }
@@ -372,7 +373,11 @@ namespace CParser.Preprocessing
 
         protected async IAsyncEnumerable<Token> AssembleBuffers(IAsyncStream<BufferBlock<Token>> lines)
         {
-            await foreach (var line in lines)
+            var lineBuffer = new BufferBlock<BufferBlock<Token>>();
+            var task = lineBuffer.PostAllAsync(lines)
+                .ContinueWith(_ => lineBuffer.Complete());
+
+            await foreach (var line in lineBuffer.ReceiveAllAsync())
             {
                 await foreach (var token in line.ReceiveAllAsync())
                 {
