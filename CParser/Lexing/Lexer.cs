@@ -251,13 +251,17 @@ namespace CParser.Lexing
                                 break;
                         }
                     }
+                    var valid = true;
                     if (floating && (isLong || unsigned))
                     {
                         Error("Invalid suffix combination");
+                        valid = false;
                     }
                     if (floating)
                     {
-                        yield return new FloatingToken(line, column, filename, d, nonDouble);
+                        var token = new FloatingToken(line, column, filename, d, nonDouble);
+                        token.IsValid = valid;
+                        yield return token;
                     }
                     else
                     {
@@ -397,15 +401,24 @@ namespace CParser.Lexing
                                     sb.Append(await InputStream.Read());
                                 }
                             }
+                            var valid = true;
                             if (await InputStream.Eof() || (c = await InputStream.Peek()) != delimeter)
                             {
                                 Error($"{delimeter} expected");
+                                valid = false;
                             }
                             else
                             {
                                 await InputStream.Read();
                             }
-                            yield return new ValueToken<string>(delimeter == '\"' ? StringLiteral : CharLiteral, line, column, filename, sb.ToString());
+                            if (delimeter == '\'' && sb.Length != 1)
+                            {
+                                Error("Invalid character literal");
+                                valid = false;
+                            }
+                            var token = new ValueToken<string>(delimeter == '\"' ? StringLiteral : CharLiteral, line, column, filename, sb.ToString());
+                            token.IsValid = valid;
+                            yield return token;
                             break;
                         }
                         case '~':
@@ -419,6 +432,11 @@ namespace CParser.Lexing
                             }
                             else
                             {
+                                if (!PreprocessorTokens)
+                                {
+                                    Error("Unexpected symbol #");
+                                }
+
                                 yield return PreprocessorTokens
                                     ? new Token(Pound, line, column, filename)
                                     : new ValueToken<char>(Terminal.Unknown, line, column, filename, '#');
@@ -656,6 +674,7 @@ namespace CParser.Lexing
                             {
                                 await InputStream.Read();
                                 var sb = OutputTrivia ? new StringBuilder() : null;
+                                var terminated = false;
                                 while (!await InputStream.Eof())
                                 {
                                     if (await InputStream.Peek() == '*')
@@ -664,6 +683,7 @@ namespace CParser.Lexing
                                         if (await InputStream.Peek() == '/')
                                         {
                                             await InputStream.Read();
+                                            terminated = true;
                                             break;
                                         }
                                         else if (OutputTrivia)
@@ -671,14 +691,27 @@ namespace CParser.Lexing
                                             sb!.Append('*');
                                         }
                                     }
-                                    else if (OutputTrivia)
+                                    else
                                     {
-                                        sb!.Append(await InputStream.Read());
-                                    }
+                                        c = await InputStream.Read();
+                                        if (OutputTrivia)
+                                        {
+                                            sb!.Append(c);
+                                        }
+                                    } 
+                                }
+                                if (!terminated)
+                                {
+                                    Error("Unterminated comment.");
                                 }
                                 if (OutputTrivia)
                                 {
-                                    yield return new ValueToken<string>(Comment, line, column, filename, sb!.ToString().Trim());
+                                    var token = new ValueToken<string>(Comment, line, column, filename, sb!.ToString().Trim());
+                                    if (!terminated)
+                                    {
+                                        token.IsValid = false;
+                                    }
+                                    yield return token;
                                 }
                             }
                             else
@@ -688,6 +721,7 @@ namespace CParser.Lexing
                             break;
                         default:
                             yield return new ValueToken<char>(Terminal.Unknown, line, column, filename, c);
+                            Error($"Unexpected symbol {c}");
                             break;
                     }
                 }

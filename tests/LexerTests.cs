@@ -22,6 +22,7 @@ namespace tests
                 preprocess, preprocess);
         }
 
+#region Positive Tests
         [Fact]
         public async Task TestTokenSequence()
         {
@@ -33,6 +34,7 @@ namespace tests
 
             var tokens = await lexer.AsList();
 
+            Assert.Empty(lexer.TranslationUnit.Errors);
             Assert.Equal(new[] { 
                 Int, Identifier, LeftParen, RightParen, LeftBrace,
                 Identifier, LeftParen, StringLiteral, RightParen, Semicolon,
@@ -54,12 +56,14 @@ namespace tests
                 @"int main() {
                     printf(""Hello, world!\n"");
                 }";
-            var lexer = Lexer.AsBlock(new TranslationUnit(new FileResolver(), "test.c"), false, false);
+            var tu = new TranslationUnit(new FileResolver(), "test.c");
+            var lexer = Lexer.AsBlock(tu, false, false);
 
             await lexer.PostAllTextAsync(new StringReader(program));
             lexer.Complete();
             var tokens = (await lexer.ReceiveAllAsync().AsList());
 
+            Assert.Empty(tu.Errors);
             Assert.Equal(new[] { 
                 Int, Identifier, LeftParen, RightParen, LeftBrace,
                 Identifier, LeftParen, StringLiteral, RightParen, Semicolon,
@@ -85,6 +89,7 @@ namespace tests
 
             var tokens = await lexer.AsList();
 
+            Assert.Empty(lexer.TranslationUnit.Errors);
             Assert.Equal(new[] {
                 Auto, Asm, Break, Case, Terminal.Char, Const, Continue, Default,
                 Do, Terminal.Double, Else, Terminal.Enum, Extern, Terminal.Float,
@@ -109,6 +114,7 @@ namespace tests
 
             var tokens = await lexer.AsList();
 
+            Assert.Empty(lexer.TranslationUnit.Errors);
             Assert.Equal(new[] {
                 Eof
             }, tokens.Terminals());
@@ -140,6 +146,7 @@ namespace tests
             tokens.Add(enumerator.Current);
             Assert.False(await enumerator.MoveNextAsync());
 
+            Assert.Empty(lexer.TranslationUnit.Errors);
             Assert.Equal(new[] {
                 LessThan, Filename, GreaterThan, Eof
             }, tokens.Terminals());
@@ -163,6 +170,7 @@ namespace tests
 
             var tokens = await lexer.AsList();
 
+            Assert.Empty(lexer.TranslationUnit.Errors);
             Assert.Equal(new[] {
                 Identifier, TypedefName, EnumConstant,
                 Eof
@@ -188,6 +196,7 @@ namespace tests
 
             var tokens = await lexer.AsList();
 
+            Assert.Empty(lexer.TranslationUnit.Errors);
             Assert.Equal(new[] {
                 IntegerConstant, IntegerConstant, IntegerConstant, IntegerConstant, 
                 IntegerConstant, IntegerConstant, IntegerConstant, IntegerConstant, 
@@ -247,7 +256,7 @@ namespace tests
         }
 
         [Fact]
-        public async Task Test()
+        public async Task TestWhitespaceAndNewlines()
         {
             var program = "   \t\r\t\r\n\t\n\n";
             var lexer = new Lexer(
@@ -257,6 +266,7 @@ namespace tests
 
             var tokens = await lexer.AsList();
 
+            Assert.Empty(lexer.TranslationUnit.Errors);
             Assert.Equal(new[] {
                 Whitespace, Newline, Whitespace, Newline, Whitespace, Newline, Newline,
                 Eof
@@ -267,7 +277,7 @@ namespace tests
         public async Task TestComments()
         {
             var program = @"// Hello,
-                            /* World! */";
+                            /**** World! ****/";
             var lexer = new Lexer(
                 new TranslationUnit(new FileResolver(), "test.c"), 
                 new CharacterStream(new StringReader(program)), 
@@ -275,12 +285,13 @@ namespace tests
 
             var tokens = await lexer.AsList();
 
+            Assert.Empty(lexer.TranslationUnit.Errors);
             Assert.Equal(new[] {
                 Comment, Newline, Whitespace, Comment,
                 Eof
             }, tokens.Terminals());
             Assert.Equal(new[] {
-                "Hello,", "World!"
+                "Hello,", "*** World! ***"
             }, tokens.Where(t => t.Kind == Comment).Select(t => t.ToString()));
         }
 
@@ -288,7 +299,7 @@ namespace tests
         public async Task TestStringsAndChars()
         {
             var program = @"
-                ""Hello \10\xa1\XF9\r\n\v\b\f\a\\\?\'\""\0""
+                ""Hello \10\xa1\XF9\r\n\v\b\f\a\\\?\'\""\0"" """"
                 'a' '\10' '\xa1' '\XF9' '\r' '\n' '\v'
                 '\b' '\f' '\a' '\\' '\?' '\'' '\""' '\0'
             ";
@@ -296,15 +307,16 @@ namespace tests
 
             var tokens = await lexer.AsList();
 
+            Assert.Empty(lexer.TranslationUnit.Errors);
             Assert.Equal(new[] {
-                StringLiteral, CharLiteral, CharLiteral, CharLiteral, CharLiteral,
+                StringLiteral, StringLiteral, CharLiteral, CharLiteral, CharLiteral,
                 CharLiteral, CharLiteral, CharLiteral, CharLiteral, CharLiteral,
                 CharLiteral, CharLiteral, CharLiteral, CharLiteral, CharLiteral,
-                CharLiteral,
+                CharLiteral, CharLiteral,
                 Eof
             }, tokens.Terminals());
             Assert.Equal(new[] {
-                "Hello \x8\xa1\xf9\r\n\v\b\f\a\\?'\"\0",
+                "Hello \x8\xa1\xf9\r\n\v\b\f\a\\?'\"\0", "",
                 "a", "\x8", "\xa1", "\xf9", "\r", "\n", "\v",
                 "\b", "\f", "\a", "\\", "?", "'", "\"", "\0",
                 "end-of-file"
@@ -314,28 +326,29 @@ namespace tests
         [Fact]
         public async Task TestPunctuation()
         {
-            var program = @"~###(){}[]:;,.?!=!%=%^=^&&&=&*=*--->-=-+++=+ ===|||=|"
-                + "<<<<=<=<>>>>=>=>/=/`@\\";
+            var program = @"~(){}[]:;,.?!=!%=%^=^&&&=&*=*--->-=-+++=+ ===|||=|"
+                + "<<<<=<=<>>>>=>=>/=/";
             var lexer = CreateTestLexer(program, false);
 
             var tokens = await lexer.AsList();
 
+            Assert.Empty(lexer.TranslationUnit.Errors);
             Assert.Equal(new[] {
-                Tilde, Unknown, Unknown, Unknown, LeftParen, RightParen, LeftBrace, RightBrace,
+                Tilde, LeftParen, RightParen, LeftBrace, RightBrace,
                 LeftBracket, RightBracket, Colon, Semicolon, Comma, Dot, Query,
                 NotEqual, Bang, ModAssign, Percent, XorAssign, Caret, LogicalAnd,
                 AndAssign, Ampersand, MultiplyAssign, Star, Decrement, Arrow,
                 SubtractAssign, Minus, Increment, AddAssign, Plus, DoubleEquals, Assign,
                 LogicalOr, OrAssign, Pipe, ShiftLeft, ShiftLeftAssign, LessThanOrEqual,
                 LessThan, ShiftRight, ShiftRightAssign, GreaterThanOrEqual, GreaterThan,
-                DivideAssign, Slash, Unknown, Unknown, Unknown,
+                DivideAssign, Slash,
                 Eof
             }, tokens.Terminals());
             Assert.Equal(new[] {
-                "~", "#", "#", "#", "(", ")", "{", "}", "[", "]", ":", ";", ",",
+                "~", "(", ")", "{", "}", "[", "]", ":", ";", ",",
                 ".", "?", "!=", "!", "%=", "%", "^=", "^", "&&", "&=", "&", "*=",
                 "*", "--", "->", "-=", "-", "++", "+=", "+", "==", "=", "||", "|=",
-                "|", "<<", "<<=", "<=", "<", ">>", ">>=", ">=", ">", "/=", "/", "`", "@", "\\",
+                "|", "<<", "<<=", "<=", "<", ">>", ">>=", ">=", ">", "/=", "/",
                 "end-of-file"
             }, tokens.Select(t => t.ToString()));
         }
@@ -348,6 +361,7 @@ namespace tests
 
             var tokens = await lexer.AsList();
 
+            Assert.Empty(lexer.TranslationUnit.Errors);
             Assert.Equal(new[] {
                 DoublePound, Pound,
                 Eof
@@ -357,12 +371,182 @@ namespace tests
                 "end-of-file"
             }, tokens.Select(t => t.ToString()));
         }
+#endregion
 
+#region Negative tests
+        [Fact]
+        public async Task TestMalformedNumbersFail()
+        {
+            var program = "0.33u 11.0l 11.33e+10u 11.33E-10ul";
+            var lexer = CreateTestLexer(program, false);
+
+            var tokens = await lexer.AsList();
+
+            Assert.Equal(4, lexer.TranslationUnit.Errors.Count);
+            Assert.All(lexer.TranslationUnit.Errors, e => Assert.Contains("suffix", e.Message));
+            Assert.Equal(new[] {
+                FloatingConstant, FloatingConstant, FloatingConstant, FloatingConstant,  
+                Eof
+            }, tokens.Terminals());
+        }
+
+        [Fact]
+        public async Task TestUnterminatedStringFails()
+        {
+            var program = @"
+                ""unterminated\""
+            ";
+            var lexer = CreateTestLexer(program, false);
+
+            var tokens = await lexer.AsList();
+
+            Assert.Collection(lexer.TranslationUnit.Errors, e => Assert.Contains("expected", e.Message));
+            Assert.Equal(new[] {
+                StringLiteral,
+                Eof
+            }, tokens.Terminals());
+            Assert.Equal(new[] {
+                "unterminated\"",
+                "end-of-file"
+            }, tokens.Select(t => t.ToString()));
+        }
+
+        [Fact]
+        public async Task TestUnterminatedComment1Fails()
+        {
+            var program = @"/*unterminated";
+            var lexer = new Lexer(
+                new TranslationUnit(new FileResolver(), "test.c"), 
+                new CharacterStream(new StringReader(program)), 
+                false, true);
+
+            var tokens = await lexer.AsList();
+
+            Assert.Collection(lexer.TranslationUnit.Errors, e => Assert.Contains("Unterminated", e.Message));
+            Assert.Equal(new[] {
+                Comment,
+                Eof
+            }, tokens.Terminals());
+            Assert.Equal(new[] {
+                "unterminated",
+                "end-of-file"
+            }, tokens.Select(t => t.ToString()));
+        }
+
+        [Fact]
+        public async Task TestUnterminatedComment2Fails()
+        {
+            var program = @"/**unterminated**";
+            var lexer = new Lexer(
+                new TranslationUnit(new FileResolver(), "test.c"), 
+                new CharacterStream(new StringReader(program)), 
+                false, true);
+
+            var tokens = await lexer.AsList();
+
+            Assert.Collection(lexer.TranslationUnit.Errors, e => Assert.Contains("Unterminated", e.Message));
+            Assert.Equal(new[] {
+                Comment,
+                Eof
+            }, tokens.Terminals());
+            Assert.Equal(new[] {
+                "*unterminated**",
+                "end-of-file"
+            }, tokens.Select(t => t.ToString()));
+        }
+
+        [Fact]
+        public async Task TestUnterminatedCharFails()
+        {
+            var program = @"
+                '\'+1
+            ";
+            var lexer = CreateTestLexer(program, false);
+
+            var tokens = await lexer.AsList();
+
+            Assert.Collection(lexer.TranslationUnit.Errors, 
+                e => Assert.Contains("expected", e.Message), 
+                e => Assert.Contains("Invalid", e.Message));
+            Assert.Equal(new[] {
+                CharLiteral,
+                Eof
+            }, tokens.Terminals());
+            Assert.Equal(new[] {
+                "\'+1",
+                "end-of-file"
+            }, tokens.Select(t => t.ToString()));
+        }
+
+        [Fact]
+        public async Task TestEmptyCharFails()
+        {
+            var program = @"
+                ''
+            ";
+            var lexer = CreateTestLexer(program, false);
+
+            var tokens = await lexer.AsList();
+
+            Assert.Collection(lexer.TranslationUnit.Errors, e => Assert.Contains("Invalid", e.Message));
+            Assert.Equal(new[] {
+                CharLiteral,
+                Eof
+            }, tokens.Terminals());
+            Assert.Equal(new[] {
+                "",
+                "end-of-file"
+            }, tokens.Select(t => t.ToString()));
+        }
+
+        [Fact]
+        public async Task TestOverflowedCharFails()
+        {
+            var program = @"
+                '123'
+            ";
+            var lexer = CreateTestLexer(program, false);
+
+            var tokens = await lexer.AsList();
+
+            Assert.Collection(lexer.TranslationUnit.Errors, e => Assert.Contains("Invalid", e.Message));
+            Assert.Equal(new[] {
+                CharLiteral,
+                Eof
+            }, tokens.Terminals());
+            Assert.Equal(new[] {
+                "123",
+                "end-of-file"
+            }, tokens.Select(t => t.ToString()));
+        }
+
+        [Fact]
+        public async Task TestUnknownPunctuationFails()
+        {
+            var program = @"###`@\";
+            var lexer = CreateTestLexer(program, false);
+
+            var tokens = await lexer.AsList();
+
+            Assert.All(lexer.TranslationUnit.Errors, e => Assert.Contains("Unexpected", e.Message));
+            Assert.Equal(new[] {
+                Unknown, Unknown, Unknown, Unknown, Unknown, Unknown,
+                Eof
+            }, tokens.Terminals());
+            Assert.Equal(new[] {
+                "#", "#", "#", "`", "@", "\\",
+                "end-of-file"
+            }, tokens.Select(t => t.ToString()));
+        }
+#endregion
+
+#region Helpers
         class FakeAstNode : AstNode
         {
             public FakeAstNode() : base(0, 0)
             {
             }
         }
+#endregion
     }
 }
