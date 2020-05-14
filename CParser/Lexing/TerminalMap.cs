@@ -9,6 +9,7 @@ namespace CParser.Lexing
             = new Dictionary<Terminal, string>
         {
             { Newline, "newline" },
+            { Whitespace, " " },
             { Eof, "end-of-file" },
             { Identifier, "identifier" },
             { TypedefName, "type name" },
@@ -24,7 +25,6 @@ namespace CParser.Lexing
             { Percent, "%" },
             { ModAssign, "%=" },
             { Caret, "^" },
-            { LogicalXor, "||" },
             { XorAssign, "^=" },
             { Ampersand, "&" },
             { LogicalAnd, "&&" },

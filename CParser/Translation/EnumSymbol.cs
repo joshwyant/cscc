@@ -7,8 +7,8 @@ namespace CParser.Translation
     {
         public int Value { get; }
 
-        public EnumSymbol(SymbolType type, string name)
-            : base(type, name)
+        public EnumSymbol(string name)
+            : base(SymbolType.EnumSymbol, name)
         {
             // Defer setting value until another pass of the compiler.
         }

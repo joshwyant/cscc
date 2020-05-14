@@ -167,7 +167,9 @@ namespace CParser.Parsing
                 await Error($"Redefinition of symbol {name}");
                 // TODO: distinguish between declarations and definitions
             }
-            table.Add(name, new BasicSymbol(type, name, value));
+            table.Add(name, type == SymbolType.EnumSymbol 
+                ? new EnumSymbol(name) as Symbol
+                : new BasicSymbol(type, name, value) as Symbol);
         }
 
         protected async Task<DeclarationAstNode?> externalDeclaration()

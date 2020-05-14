@@ -142,6 +142,7 @@ namespace CParser.Lexing
                     var unsigned = false;
                     var isLong = false;
                     var nonDouble = false;
+                    var d = 0d;
                     if (c == '0')
                     {
                         if ((c = await InputStream.Peek()) == 'x' || c == 'X')
@@ -149,7 +150,7 @@ namespace CParser.Lexing
                             await InputStream.Read();
                             while (char.IsDigit(c = char.ToLower(await InputStream.Peek())) || (c >= 'a' && c <= 'f'))
                             {
-                                c = await InputStream.Read();
+                                await InputStream.Read();
                                 integer *= 0x10;
                                 integer += (ulong)(char.IsDigit(c) ? c - '0' : c - 'a' + 0xa);
                             }
@@ -176,27 +177,28 @@ namespace CParser.Lexing
                         }
                         if (await InputStream.Peek() == '.')
                         {
+                            var multiplier = 0.1M;
                             floating = true;
                             await InputStream.Read();
                             while (char.IsDigit(await InputStream.Peek()))
                             {
                                 c = await InputStream.Read();
-                                fraction += c - '0';
-                                fraction *= 0.1M;
+                                fraction += (c - '0') * multiplier;
+                                multiplier *= 0.1M;
                             }
-                            real = integer + fraction;
+                            d = (double)(integer + fraction);
                         }
                         if ((c = await InputStream.Peek()) == 'e' || c == 'E')
                         {
                             floating = true;
                             real = integer + fraction;
-                            var multiplier = 10M;
+                            var eSign = 1;
                             var e = 0;
                             await InputStream.Read();
                             if ((c = await InputStream.Peek()) == '+' || c == '-')
                             {
                                 await InputStream.Read();
-                                multiplier = c == '-' ? 0.1M : 10M;
+                                eSign = c == '-' ? -1 : 1;
                             }
                             while (char.IsDigit(await InputStream.Peek()))
                             {
@@ -204,14 +206,28 @@ namespace CParser.Lexing
                                 e *= 10;
                                 e += c - '0';
                             }
-                            for (var i = 0; i < e; i++)
+                            if (real != 0m)
                             {
-                                var delta = Math.Abs(real - (decimal)System.Double.Epsilon);
-                                if (delta < 0.1M || delta > 10M)
+                                e *= eSign;
+                                d = (double)real * Math.Pow(10.0, (double)e);
+                                while (real >= 10m)
                                 {
-                                    break;
+                                    real /= 10m;
+                                    e += eSign;
                                 }
-                                real *= multiplier;
+                                while (real < 1m)
+                                {
+                                    real *= 10m;
+                                    e -= eSign;
+                                }
+                                if (e == 308 && real >= 1.7976931348623157m || e > 308)
+                                {
+                                    d = double.MaxValue;
+                                }
+                                else if (e == -324 && real <= 4.94065645841247m || e < -324)
+                                {
+                                    d = double.Epsilon;
+                                }
                             }
                         }
                     }
@@ -241,7 +257,7 @@ namespace CParser.Lexing
                     }
                     if (floating)
                     {
-                        yield return new FloatingToken(line, column, filename, real, nonDouble);
+                        yield return new FloatingToken(line, column, filename, d, nonDouble);
                     }
                     else
                     {
@@ -292,18 +308,15 @@ namespace CParser.Lexing
                                     if (!await InputStream.Eof())
                                     {
                                         c = await InputStream.Read();
-                                        if (char.IsDigit(c))
+                                        if (char.IsDigit(c) && c < '8')
                                         {
-                                            int i;
-                                            int cc = 0;
-                                            for (i = 0; i < 3 && (char.IsDigit(c = await InputStream.Peek()) || char.ToLower(c) >= 'a' || char.ToLower(c) <= 'f'); i++)
+                                            int cc = c - '0';
+                                            for (var i = 0; i < 2 && char.IsDigit(c = await InputStream.Peek()) && c < '8'; i++)
                                             {
-                                                await InputStream.Read();
                                                 cc *= 8;
-                                                cc += c - '0';
+                                                cc += await InputStream.Read() - '0';
                                             }
                                             sb.Append((char)cc);
-                                            break;
                                         }
                                         else
                                         {
@@ -343,11 +356,12 @@ namespace CParser.Lexing
                                                     sb.Append('"');
                                                     break;
                                                 case 'x':
+                                                case 'X':
                                                 {
-                                                    await InputStream.Read();
+                                                    var letter = c;
                                                     int i;
                                                     int cc = 0;
-                                                    for (i = 0; i < 2 && (char.IsDigit(c = await InputStream.Peek()) || char.ToLower(c) >= 'a' || char.ToLower(c) <= 'f'); i++)
+                                                    for (i = 0; i < 2 && (char.IsDigit(c = char.ToLower(await InputStream.Peek())) || (c >= 'a' && c <= 'f')); i++)
                                                     {
                                                         await InputStream.Read();
                                                         cc *= 0x10;
@@ -362,7 +376,7 @@ namespace CParser.Lexing
                                                     }
                                                     if (i == 0)
                                                     {
-                                                        sb.Append("\\x");
+                                                        sb.Append("\\"+letter);
                                                     }
                                                     else
                                                     {
@@ -403,9 +417,12 @@ namespace CParser.Lexing
                                 await InputStream.Read();
                                 yield return new Token(DoublePound, line, column, filename);
                             }
-                            yield return PreprocessorTokens 
-                                ? new Token(Pound, line, column, filename)
-                                : new ValueToken<char>(Terminal.Unknown, line, column, filename, '#');
+                            else
+                            {
+                                yield return PreprocessorTokens
+                                    ? new Token(Pound, line, column, filename)
+                                    : new ValueToken<char>(Terminal.Unknown, line, column, filename, '#');
+                            }
                             break;
                         case '(':
                             yield return new Token(LeftParen, line, column, filename);
@@ -632,7 +649,7 @@ namespace CParser.Lexing
                                 }
                                 if (OutputTrivia)
                                 {
-                                    yield return new ValueToken<string>(Comment, line, column, filename, sb!.ToString());
+                                    yield return new ValueToken<string>(Comment, line, column, filename, sb!.ToString().Trim());
                                 }
                             }
                             else if (await InputStream.Peek() == '*')
@@ -661,7 +678,7 @@ namespace CParser.Lexing
                                 }
                                 if (OutputTrivia)
                                 {
-                                    yield return new ValueToken<string>(Comment, line, column, filename, sb!.ToString());
+                                    yield return new ValueToken<string>(Comment, line, column, filename, sb!.ToString().Trim());
                                 }
                             }
                             else

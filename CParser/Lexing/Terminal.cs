@@ -23,7 +23,6 @@ namespace CParser.Lexing
         Percent,
         ModAssign,
         Caret,
-        LogicalXor,
         XorAssign,
         Ampersand,
         LogicalAnd,
