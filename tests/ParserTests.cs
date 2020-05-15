@@ -1,4 +1,5 @@
 using System.IO;
+using System.Threading.Tasks;
 using CParser.Helpers;
 using CParser.Parsing;
 using CParser.Parsing.Ast;
@@ -18,7 +19,7 @@ namespace tests
         }
 
         [Fact]
-        public async void TestBasicC89Program()
+        public async Task TestBasicC89Program()
         {
             var program = @"#include <stdio.h>
                             main() {
@@ -53,6 +54,39 @@ namespace tests
             Assert.Equal(1, callExpr.Parameters.Count);
             Assert.NotNull(str = callExpr.Parameters[0] as StringLiteralAstNode);
             Assert.Equal("Hello, world!\n", str.Text);
+        }
+
+        [Fact]
+        public async Task TestFunctionDefinition()
+        {
+            var program = @"int main(argc, argv)
+                                // int argc;
+                                // char **argv;
+                            {
+                                int x = 3;
+                                float y = 4, z;
+                                test();
+                            }";
+            var parser = CreateTestParser(program);
+            var results = await parser.AsList();
+
+            // 2: main() {
+            FunctionDefinitionAstNode printfDef;
+            Assert.NotNull(printfDef = results[0] as FunctionDefinitionAstNode);
+            Assert.Equal("main", printfDef.Name);
+
+            // // 3: printf(""Hello, world!\n"");
+            // PostfixCallExpressionAstNode callExpr;
+            // IdentifierAstNode ident;
+            // StringLiteralAstNode str;
+            // Assert.Equal(1, printfDef.Body.StatementList.Count);
+            // Assert.NotNull(printfDef.Body.StatementList[0] as ExpressionStatementAstNode);
+            // Assert.NotNull(callExpr = (printfDef.Body.StatementList[0] as ExpressionStatementAstNode).Expression as PostfixCallExpressionAstNode);
+            // Assert.NotNull(ident = callExpr.Function as IdentifierAstNode);
+            // Assert.Equal("printf", ident.Identifier);
+            // Assert.Equal(1, callExpr.Parameters.Count);
+            // Assert.NotNull(str = callExpr.Parameters[0] as StringLiteralAstNode);
+            // Assert.Equal("Hello, world!\n", str.Text);
         }
     }
 }

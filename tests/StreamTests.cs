@@ -34,6 +34,31 @@ namespace tests
         }
 
         [Fact]
+        public void TestStreamWrapper()
+        {
+            var ints = new StreamWrapper<int>(syncGenerator(), 0xFF);
+
+            for (int i = 0; i < 5; i++)
+            {
+                Assert.False(ints.Eof());
+                Assert.Equal(ints.Peek(), i);
+                Assert.Equal(ints.Read(), i);
+            }
+            ints.PutBack(4);
+            ints.PutBack(3);
+            for (int i = 3; i < 10; i++)
+            {
+                Assert.False(ints.Eof());
+                Assert.Equal(ints.Peek(), i);
+                Assert.Equal(ints.Read(), i);
+            }
+
+            Assert.True(ints.Eof());
+            Assert.Equal(ints.Peek(), ints.Sentinel);
+            Assert.True(ints.Eof());
+        }
+
+        [Fact]
         public async Task TestPostAllAsync()
         {
             var block = new BufferBlock<int>();
@@ -104,6 +129,14 @@ namespace tests
             Assert.Equal(
                 new[] {"0!?", "1!?", "2!?", "3!?", "4!?", "5!?"},
                 await result.AsList());
+        }
+
+        protected IEnumerable<int> syncGenerator()
+        {
+            for (var i = 0; i < 10; i++)
+            {
+                yield return i;
+            }
         }
 
         protected async IAsyncEnumerable<int> generator()
